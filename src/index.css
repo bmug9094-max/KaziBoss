@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Thème sombre par défaut (fintech élégante), thème clair via html.light */
+:root {
+  --bg: 15 23 42;          /* #0F172A */
+  --surface: 30 41 59;     /* #1E293B */
+  --surface-2: 41 55 77;
+  --line: 51 65 85;
+  --ink: 241 245 249;
+  --muted: 148 163 184;
+  color-scheme: dark;
+}
+
+html.light {
+  --bg: 248 250 252;
+  --surface: 255 255 255;
+  --surface-2: 241 245 249;
+  --line: 226 232 240;
+  --ink: 15 23 42;
+  --muted: 100 116 139;
+  color-scheme: light;
+}
+
+@layer base {
+  html,
+  body {
+    @apply bg-bg text-ink antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+  body {
+    min-height: 100dvh;
+  }
+  input,
+  select,
+  textarea {
+    @apply text-ink;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-3xl border border-line/70 bg-surface shadow-card;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-gold text-slate-900 hover:bg-gold-soft;
+  }
+  .btn-emerald {
+    @apply btn bg-emerald text-slate-900 hover:bg-emerald-soft;
+  }
+  .btn-ghost {
+    @apply btn border border-line bg-surface-2/60 text-ink hover:bg-surface-2;
+  }
+  .input {
+    @apply w-full rounded-2xl border border-line bg-surface-2/60 px-4 py-3 text-base outline-none transition placeholder:text-muted/70 focus:border-gold focus:ring-2 focus:ring-gold/30;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full bg-surface-2/80 px-2.5 py-1 text-xs font-bold;
+  }
+}
+
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top), 0.5rem);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
