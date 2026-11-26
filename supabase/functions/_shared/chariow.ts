@@ -18,11 +18,27 @@ export function packForProduct(productId: string | undefined | null): PackId | n
 
 export const isPackId = (v: unknown): v is PackId => v === 'agri_import' || v === 'unlimited_lives' || v === 'digital_growth';
 
-export const corsHeaders = {
-  'Access-Control-Allow-Origin': Deno.env.get('APP_URL') ?? '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+// Origines autorisées à appeler les fonctions depuis le navigateur :
+// APP_URL + ALLOWED_ORIGINS (liste séparée par des virgules) + serveurs de dev locaux.
+const ALLOWED = new Set(
+  [Deno.env.get('APP_URL'), ...(Deno.env.get('ALLOWED_ORIGINS') ?? '').split(','), 'http://localhost:5173', 'http://localhost:4173']
+    .map((o) => o?.trim().replace(/\/$/, ''))
+    .filter((o): o is string => Boolean(o)),
+);
+
+/** L'origine si elle fait partie de la liste autorisée, sinon null. */
+export const allowedOrigin = (origin: string | null): string | null => (origin && ALLOWED.has(origin) ? origin : null);
+
+/** En-têtes CORS : renvoie l'origine de la requête si elle est autorisée. */
+export function corsHeadersFor(origin: string | null): Record<string, string> {
+  const allowed = allowedOrigin(origin) ?? Deno.env.get('APP_URL') ?? '*';
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    Vary: 'Origin',
+  };
+}
 
 export function json(body: unknown, status = 200, extra: HeadersInit = {}): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', ...extra } });

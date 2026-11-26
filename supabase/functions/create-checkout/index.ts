@@ -12,12 +12,16 @@
 //      CHARIOW_PRODUCT_AGRI=prd_xxx CHARIOW_PRODUCT_UNLIMITED=prd_yyy CHARIOW_PRODUCT_RESOURCES=prd_zzz
 // ═══════════════════════════════════════════════════════════════════
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { PACK_PRODUCTS, corsHeaders, isPackId, json } from '../_shared/chariow.ts';
+import { PACK_PRODUCTS, allowedOrigin, corsHeadersFor, isPackId, json } from '../_shared/chariow.ts';
 
 const API_KEY = Deno.env.get('CHARIOW_API_KEY') ?? '';
 const APP_URL = (Deno.env.get('APP_URL') ?? '').replace(/\/$/, '');
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get('Origin');
+  const corsHeaders = corsHeadersFor(origin);
+  // Retour après paiement sur l'adresse d'où vient le joueur (kaziboss.com, www, vercel.app…).
+  const returnBase = allowedOrigin(origin) ?? APP_URL;
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'method' }, 405, corsHeaders);
   if (!API_KEY) return json({ error: 'Paiement non configuré (CHARIOW_API_KEY).' }, 500, corsHeaders);
@@ -56,7 +60,7 @@ Deno.serve(async (req) => {
       last_name: lastName,
       phone: { number: phone, country_code: country },
       custom_metadata: { kaziboss_user_id: user.id, pack },
-      redirect_url: APP_URL ? `${APP_URL}/?tab=profile&purchase=${pack}` : undefined,
+      redirect_url: returnBase ? `${returnBase}/?tab=profile&purchase=${pack}` : undefined,
     }),
   });
 
