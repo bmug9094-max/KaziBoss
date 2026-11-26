@@ -7,6 +7,7 @@ import { clearReferral, inviteText, pendingReferral, shareGame, shareUrl } from 
 import { loadJSON, removeKey, saveJSON, todayISO } from '../lib/storage';
 import { isSupabaseConfigured, supabase, type ProfileRow } from '../lib/supabase';
 import type { PackId, PlayerProfile, PlayerStats, ToolId } from '../types';
+import { L } from '../i18n';
 
 export const DEFAULT_STATS: PlayerStats = {
   runsPlayed: 0,
@@ -21,7 +22,7 @@ export const DEFAULT_STATS: PlayerStats = {
 };
 
 export const DEFAULT_PROFILE: PlayerProfile = {
-  username: 'Invité',
+  username: L('Invité', 'Guest'),
   city: 'Kinshasa',
   xp: 0,
   kazicoins: 50,
@@ -202,7 +203,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const earned = newlyEarnedBadges(profile);
     if (!earned.length) return;
     setProfile((p) => ({ ...p, badges: union(p.badges, earned.map((b) => b.id)) }));
-    earned.forEach((b) => notify(`${b.emoji} Badge débloqué : ${b.name}`, 'gold'));
+    earned.forEach((b) => notify(`${b.emoji} ${L('Badge débloqué :', 'Badge unlocked:')} ${b.name}`, 'gold'));
   }, [profile, notify]);
 
   // ───── Auth Supabase ─────
@@ -223,13 +224,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       const before = profileRef.current.unlockedPacks.length;
       const { data, error } = await supabase.rpc('claim_pending_purchases');
       if (error) {
-        if (!silent) notify('Impossible de vérifier tes achats pour le moment.', 'error');
+        if (!silent) notify(L('Impossible de vérifier tes achats pour le moment.', 'Unable to check your purchases right now.'), 'error');
         return;
       }
       const packs = (Array.isArray(data) ? data : []) as PackId[];
       setProfile((p) => ({ ...p, unlockedPacks: packs }));
-      if (packs.length > before) notify('🎉 Achat retrouvé : ton pack est débloqué !', 'gold');
-      else if (!silent) notify(packs.length ? 'Tes packs sont à jour.' : 'Aucun achat trouvé pour cet email.', 'info');
+      if (packs.length > before) notify(L('🎉 Achat retrouvé : ton pack est débloqué !', '🎉 Purchase found: your pack is unlocked!'), 'gold');
+      else if (!silent) notify(packs.length ? L('Tes packs sont à jour.', 'Your packs are up to date.') : L('Aucun achat trouvé pour cet email.', 'No purchase found for this email.'), 'info');
     },
     [notify],
   );
@@ -240,14 +241,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const amount = typeof data === 'number' ? data : 0;
     if (error || amount <= 0) return;
     setProfile((p) => ({ ...p, kazicoins: p.kazicoins + amount }));
-    notify(`🤝 Bonus de parrainage : +${amount} KaziCoins !`, 'gold');
+    notify(L(`🤝 Bonus de parrainage : +${amount} KaziCoins !`, `🤝 Referral bonus: +${amount} KaziCoins!`), 'gold');
   }, [notify]);
 
   const fetchRemote = useCallback(async (u: User) => {
     if (!supabase) return;
     const { data, error } = await supabase.from('profiles').select('*').eq('id', u.id).maybeSingle();
     if (error) {
-      notify('Synchronisation impossible pour le moment.', 'error');
+      notify(L('Synchronisation impossible pour le moment.', 'Unable to sync right now.'), 'error');
       return;
     }
     if (data) {
@@ -259,7 +260,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         if (merged.signupBonus) return merged;
         return { ...merged, signupBonus: true, kazicoins: merged.kazicoins + SIGNUP_BONUS };
       });
-      if (!alreadyGiven) notify(`🎁 Bienvenue ! +${SIGNUP_BONUS} KaziCoins offerts`, 'gold');
+      if (!alreadyGiven) notify(L(`🎁 Bienvenue ! +${SIGNUP_BONUS} KaziCoins offerts`, `🎁 Welcome! +${SIGNUP_BONUS} free KaziCoins`), 'gold');
       setRefCode(row.ref_code ?? null);
     }
     setSynced(true);
@@ -298,7 +299,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     params.delete('purchase');
     const qs = params.toString();
     window.history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : ''));
-    notify('⏳ Paiement reçu, activation de ton pack…', 'info');
+    notify(L('⏳ Paiement reçu, activation de ton pack…', '⏳ Payment received, activating your pack…'), 'info');
     let tries = 0;
     const timer = setInterval(async () => {
       tries++;
@@ -307,10 +308,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       if (packs.includes(pack)) {
         clearInterval(timer);
         setProfile((p) => ({ ...p, unlockedPacks: packs }));
-        notify('🎉 Pack activé, merci pour ton soutien !', 'gold');
+        notify(L('🎉 Pack activé, merci pour ton soutien !', '🎉 Pack activated, thanks for your support!'), 'gold');
       } else if (tries >= 13) {
         clearInterval(timer);
-        notify("L'activation prend plus de temps que prévu. Utilise « Restaurer mes achats » dans quelques minutes.", 'info');
+        notify(L("L'activation prend plus de temps que prévu. Utilise « Restaurer mes achats » dans quelques minutes.", 'Activation is taking longer than expected. Use “Restore my purchases” in a few minutes.'), 'info');
       }
     }, 3000);
     return () => clearInterval(timer);
@@ -348,7 +349,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const spendCoins = useCallback(
     (amount: number) => {
       if (profileRef.current.kazicoins < amount) {
-        notify("Pas assez de KaziCoins. Joue et apprends pour en gagner !", 'error');
+        notify(L('Pas assez de KaziCoins. Joue et apprends pour en gagner !', 'Not enough KaziCoins. Play and learn to earn more!'), 'error');
         return false;
       }
       setProfile((p) => ({ ...p, kazicoins: p.kazicoins - amount }));
@@ -361,8 +362,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const { profile: next, shieldUsed } = touchStreak(profileRef.current);
     if (next === profileRef.current) return;
     setProfile((p) => ({ ...p, streak: next.streak, bestStreak: next.bestStreak, lastActiveDate: next.lastActiveDate, streakShields: next.streakShields }));
-    if (shieldUsed) notify('🛡️ Ton bouclier a sauvé ton streak !', 'gold');
-    else if (next.streak > 1) notify(`🔥 Streak : ${next.streak} jours !`, 'gold');
+    if (shieldUsed) notify(L('🛡️ Ton bouclier a sauvé ton streak !', '🛡️ Your shield saved your streak!'), 'gold');
+    else if (next.streak > 1) notify(L(`🔥 Streak : ${next.streak} jours !`, `🔥 Streak: ${next.streak} days!`), 'gold');
   }, [notify]);
 
   const markToolUsed = useCallback((tool: ToolId) => {
@@ -373,7 +374,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const module4Unlocked = profile.coinUnlocks.includes('module4') || profile.unlockedPacks.includes('agri_import');
 
   const signUp = useCallback(async (email: string, password: string, username: string, city: string): Promise<AuthResult> => {
-    if (!supabase) return { error: 'Supabase non configuré.' };
+    if (!supabase) return { error: L('Supabase non configuré.', 'Supabase is not configured.') };
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -383,74 +384,74 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (error) return { error: error.message };
     clearReferral();
     setProfile((p) => ({ ...p, username, city }));
-    if (!data.session) return { info: 'Compte créé ! Vérifie ta boîte mail pour confirmer ton adresse, puis connecte-toi.' };
+    if (!data.session) return { info: L('Compte créé ! Vérifie ta boîte mail pour confirmer ton adresse, puis connecte-toi.', 'Account created! Check your inbox to confirm your address, then log in.') };
     return {};
   }, []);
 
   const signIn = useCallback(async (email: string, password: string): Promise<AuthResult> => {
-    if (!supabase) return { error: 'Supabase non configuré.' };
+    if (!supabase) return { error: L('Supabase non configuré.', 'Supabase is not configured.') };
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return error ? { error: error.message === 'Invalid login credentials' ? 'Email ou mot de passe incorrect.' : error.message } : {};
+    return error ? { error: error.message === 'Invalid login credentials' ? L('Email ou mot de passe incorrect.', 'Incorrect email or password.') : error.message } : {};
   }, []);
 
   const signOut = useCallback(async () => {
     await supabase?.auth.signOut();
     setRefCode(null);
     setProfile((p) => ({ ...p, unlockedPacks: [] }));
-    notify('Déconnecté. Ta progression reste sur cet appareil.');
+    notify(L('Déconnecté. Ta progression reste sur cet appareil.', 'Logged out. Your progress stays on this device.'));
   }, [notify]);
 
   const resetProgress = useCallback(() => {
     removeKey('run');
     removeKey('journal');
     setProfile((p) => ({ ...DEFAULT_PROFILE, theme: p.theme, username: p.username, city: p.city, unlockedPacks: p.unlockedPacks }));
-    notify('Progression réinitialisée.');
+    notify(L('Progression réinitialisée.', 'Progress reset.'));
   }, [notify]);
 
   const requestPasswordReset = useCallback(async (email: string): Promise<AuthResult> => {
-    if (!supabase) return { error: 'Supabase non configuré.' };
+    if (!supabase) return { error: L('Supabase non configuré.', 'Supabase is not configured.') };
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
     if (error) return { error: error.message };
-    return { info: 'Si un compte existe pour cet email, tu vas recevoir un lien pour choisir un nouveau mot de passe.' };
+    return { info: L('Si un compte existe pour cet email, tu vas recevoir un lien pour choisir un nouveau mot de passe.', 'If an account exists for this email, you will receive a link to choose a new password.') };
   }, []);
 
   const updatePassword = useCallback(
     async (password: string): Promise<AuthResult> => {
-      if (!supabase) return { error: 'Supabase non configuré.' };
+      if (!supabase) return { error: L('Supabase non configuré.', 'Supabase is not configured.') };
       const { error } = await supabase.auth.updateUser({ password });
       if (error) return { error: error.message };
       setPasswordRecovery(false);
-      notify('🔐 Mot de passe mis à jour.', 'success');
+      notify(L('🔐 Mot de passe mis à jour.', '🔐 Password updated.'), 'success');
       return {};
     },
     [notify],
   );
 
   const checkout = useCallback(async (pack: PackId, buyer: CheckoutBuyer): Promise<AuthResult> => {
-    if (!supabase) return { error: 'Supabase non configuré.' };
+    if (!supabase) return { error: L('Supabase non configuré.', 'Supabase is not configured.') };
     const { data, error } = await supabase.functions.invoke<{ step?: string; url?: string | null; error?: string }>('create-checkout', {
       body: { pack, buyer },
     });
-    if (error || !data) return { error: 'Paiement indisponible pour le moment. Réessaie dans un instant.' };
+    if (error || !data) return { error: L('Paiement indisponible pour le moment. Réessaie dans un instant.', 'Payment is unavailable right now. Try again in a moment.') };
     if (data.step === 'already_purchased') {
       await restorePurchases(true);
-      return { info: 'Tu as déjà acheté ce pack : il est restauré sur ton compte.' };
+      return { info: L('Tu as déjà acheté ce pack : il est restauré sur ton compte.', 'You already bought this pack: it has been restored to your account.') };
     }
-    if (!data.url) return { error: data.error ?? 'Lien de paiement introuvable.' };
+    if (!data.url) return { error: data.error ?? L('Lien de paiement introuvable.', 'Payment link not found.') };
     window.location.assign(data.url);
     return {};
   }, [restorePurchases]);
 
   const deleteAccount = useCallback(async (): Promise<AuthResult> => {
-    if (!supabase) return { error: 'Supabase non configuré.' };
+    if (!supabase) return { error: L('Supabase non configuré.', 'Supabase is not configured.') };
     const { error } = await supabase.rpc('delete_my_account');
-    if (error) return { error: 'Suppression impossible pour le moment. Écris-nous et nous le ferons pour toi.' };
+    if (error) return { error: L('Suppression impossible pour le moment. Écris-nous et nous le ferons pour toi.', 'Unable to delete right now. Write to us and we will do it for you.') };
     await supabase.auth.signOut();
     removeKey('run');
     removeKey('journal');
     removeKey('sector');
     setProfile((p) => ({ ...DEFAULT_PROFILE, theme: p.theme }));
-    notify('Ton compte et tes données ont été supprimés.');
+    notify(L('Ton compte et tes données ont été supprimés.', 'Your account and data have been deleted.'));
     return {};
   }, [notify]);
 
@@ -466,7 +467,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         lastShareDate: today,
         kazicoins: bonus ? p.kazicoins + SHARE_DAILY_BONUS : p.kazicoins,
       }));
-      if (bonus) notify(`📣 Merci pour le partage ! +${SHARE_DAILY_BONUS} KaziCoins`, 'gold');
+      if (bonus) notify(L(`📣 Merci pour le partage ! +${SHARE_DAILY_BONUS} KaziCoins`, `📣 Thanks for sharing! +${SHARE_DAILY_BONUS} KaziCoins`), 'gold');
     },
     [refCode, notify],
   );

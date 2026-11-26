@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { displayStreak, levelInfo } from '../lib/progress';
 import { isSoundOn, onSoundChange, playChime, setSoundOn } from '../lib/sound';
 import { usePlayer } from '../state/PlayerContext';
+import { L } from '../i18n';
 
 export default function TopBar({ onOpenProfile }: { onOpenProfile: () => void }) {
   const { profile } = usePlayer();
@@ -28,7 +29,7 @@ export default function TopBar({ onOpenProfile }: { onOpenProfile: () => void })
               Kazi<span className="text-gold">Boss</span>
             </p>
             <p className="truncate text-[11px] font-semibold text-muted" title={lvl.title}>
-              Niv. {lvl.level} · {lvl.title}
+              {L('Niv.', 'Lvl')} {lvl.level} · {lvl.title}
             </p>
           </div>
         </div>
@@ -36,13 +37,13 @@ export default function TopBar({ onOpenProfile }: { onOpenProfile: () => void })
           <button
             onClick={toggleSound}
             className="rounded-full p-1.5 text-muted transition hover:bg-surface-2 hover:text-ink"
-            aria-label={sound ? 'Couper le son' : 'Activer le son'}
+            aria-label={sound ? L('Couper le son', 'Mute sound') : L('Activer le son', 'Turn sound on')}
             aria-pressed={sound}
-            title={sound ? 'Son activé' : 'Son coupé'}
+            title={sound ? L('Son activé', 'Sound on') : L('Son coupé', 'Sound off')}
           >
             {sound ? <Volume2 size={16} /> : <VolumeX size={16} />}
           </button>
-          <button onClick={onOpenProfile} className="flex items-center gap-1.5" aria-label="Voir le profil">
+          <button onClick={onOpenProfile} className="flex items-center gap-1.5" aria-label={L('Voir le profil', 'View profile')}>
             <span className={`chip ${streak > 0 ? 'text-gold' : 'text-muted'}`}>
               <Flame size={14} className={streak > 0 ? 'fill-gold' : ''} /> {streak}
             </span>

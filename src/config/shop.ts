@@ -1,4 +1,5 @@
 import type { PackId } from '../types';
+import { L, usd } from '../i18n';
 
 /**
  * CONFIGURATION BOUTIQUE
@@ -12,10 +13,10 @@ import type { PackId } from '../types';
  */
 
 export const COIN_ITEMS = {
-  streakShield: { id: 'streak_shield', name: 'Bouclier de Streak', description: 'Protège ton streak si tu rates un jour.', price: 100, emoji: '🛡️' },
-  energyRefill: { id: 'energy_refill', name: "Recharge d'Énergie", description: '+30 énergie pendant une partie.', price: 60, emoji: '⚡' },
-  module4: { id: 'module4', name: 'Module 4 : Croissance & Équipe', description: 'Débloque les leçons avancées.', price: 400, emoji: '🚀' },
-} as const;
+  streakShield: { id: 'streak_shield', name: L('Bouclier de Streak', 'Streak Shield'), description: L('Protège ton streak si tu rates un jour.', 'Protects your streak if you miss a day.'), price: 100, emoji: '🛡️' },
+  energyRefill: { id: 'energy_refill', name: L("Recharge d'Énergie", 'Energy Refill'), description: L('+30 énergie pendant une partie.', '+30 energy during a game.'), price: 60, emoji: '⚡' },
+  module4: { id: 'module4', name: L('Module 4 : Croissance & Équipe', 'Module 4: Growth & Team'), description: L('Débloque les leçons avancées.', 'Unlocks the advanced lessons.'), price: 400, emoji: '🚀' },
+};
 
 export const ENERGY_REFILL_AMOUNT = 30;
 
@@ -45,34 +46,48 @@ export interface PremiumPack {
 export const PREMIUM_PACKS: PremiumPack[] = [
   {
     id: 'agri_import',
-    badge: '⭐ Recommandé · le plus complet',
-    name: 'Pack Agri-Business & Import-Export',
-    tagline: 'Remonte la chaîne de valeur, de la récolte au conteneur.',
-    perks: [
-      '6 scénarios exclusifs (récolte, conteneur, douane…)',
-      'Secteur « Agri-Business & Transformation » débloqué tout de suite',
-      'Module 4 « Croissance & Équipe » inclus',
-      'Badge Exportateur',
-    ],
-    price: '5 $',
+    badge: L('⭐ Recommandé · le plus complet', '⭐ Recommended · most complete'),
+    name: L('Pack Agri-Business & Import-Export', 'Agri-Business & Import-Export Pack'),
+    tagline: L('Remonte la chaîne de valeur, de la récolte au conteneur.', 'Move up the value chain, from harvest to shipping container.'),
+    perks: L(
+      [
+        '6 scénarios exclusifs (récolte, conteneur, douane…)',
+        'Secteur « Agri-Business & Transformation » débloqué tout de suite',
+        'Module 4 « Croissance & Équipe » inclus',
+        'Badge Exportateur',
+      ],
+      [
+        '6 exclusive scenarios (harvest, container, customs…)',
+        '“Agri-Business & Processing” sector unlocked right away',
+        'Module 4 “Growth & Team” included',
+        'Exporter badge',
+      ],
+    ),
+    price: usd(5),
     emoji: '🚢',
     url: import.meta.env.VITE_CHARIOW_AGRI_URL ?? '',
   },
   {
     id: 'unlimited_lives',
-    name: 'Pack Vies Illimitées',
-    tagline: 'Rejoue sans limite, apprends de chaque faillite.',
-    perks: ['Secondes chances illimitées et gratuites', 'Plusieurs secondes chances dans le même mois'],
-    price: '3 $',
+    name: L('Pack Vies Illimitées', 'Unlimited Lives Pack'),
+    tagline: L('Rejoue sans limite, apprends de chaque faillite.', 'Replay without limits, learn from every bankruptcy.'),
+    perks: L(
+      ['Secondes chances illimitées et gratuites', 'Plusieurs secondes chances dans le même mois'],
+      ['Free, unlimited second chances', 'Several second chances in the same month'],
+    ),
+    price: usd(3),
     emoji: '❤️‍🔥',
     url: import.meta.env.VITE_CHARIOW_UNLIMITED_URL ?? '',
   },
   {
     id: 'digital_growth',
-    name: 'Ressources Réelles — Digital Growth',
-    tagline: 'Les modèles Excel automatisés pour ta vraie boutique.',
-    perks: ['Journal de caisse automatisé', 'Calculateur de marge & stock', 'Tableau de bord mensuel'],
-    price: '10 $',
+    name: L('Ressources Réelles — Digital Growth', 'Real-World Resources — Digital Growth'),
+    tagline: L('Les modèles Excel automatisés pour ta vraie boutique.', 'Automated Excel templates for your real shop.'),
+    perks: L(
+      ['Journal de caisse automatisé', 'Calculateur de marge & stock', 'Tableau de bord mensuel'],
+      ['Automated cash book', 'Margin & stock calculator', 'Monthly dashboard'],
+    ),
+    price: usd(10),
     emoji: '📊',
     url: import.meta.env.VITE_CHARIOW_RESOURCES_URL ?? '',
     external: true,

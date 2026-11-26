@@ -17,6 +17,7 @@ import {
   Sun,
   Trash2,
   Trophy,
+  Languages,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { LEGAL_LINKS } from '../../config/legal';
@@ -28,6 +29,7 @@ import { usePlayer } from '../../state/PlayerContext';
 import BuyerSheet, { type BuyerInfo } from './BuyerSheet';
 import InviteCard from './InviteCard';
 import Leaderboard from './Leaderboard';
+import { L, LANG, LOCALE, setLang } from '../../i18n';
 
 export default function ProfileTab() {
   const {
@@ -59,13 +61,13 @@ export default function ProfileTab() {
     const def = COIN_ITEMS[item];
     if (!spendCoins(def.price)) return;
     update((p) => (item === 'streakShield' ? { ...p, streakShields: p.streakShields + 1 } : { ...p, energyRefills: p.energyRefills + 1 }));
-    notify(`${def.emoji} ${def.name} ajouté !`, 'success');
+    notify(`${def.emoji} ${def.name} ${L('ajouté !', 'added!')}`, 'success');
   };
 
   const unlockModule4 = () => {
     if (!spendCoins(COIN_ITEMS.module4.price)) return;
     update((p) => ({ ...p, coinUnlocks: [...p.coinUnlocks, 'module4'] }));
-    notify('🚀 Module 4 débloqué !', 'gold');
+    notify(L('🚀 Module 4 débloqué !', '🚀 Module 4 unlocked!'), 'gold');
   };
 
   /** Un pack est achetable si le paiement serveur (Supabase) ou un lien Chariow direct est configuré. */
@@ -81,7 +83,7 @@ export default function ProfileTab() {
       return openAuth('buy');
     }
     if (isSupabaseConfigured) return setBuying(pack); // formulaire acheteur, puis checkout serveur
-    fallbackLink(pack, 'Paiement non configuré.');
+    fallbackLink(pack, L('Paiement non configuré.', 'Payment is not configured.'));
   };
 
   /** Secours : lien Chariow direct. L'achat sera rattaché via l'email (« Restaurer mes achats »). */
@@ -123,10 +125,10 @@ export default function ProfileTab() {
           <div className="min-w-0 flex-1">
             <p className="truncate text-xl font-extrabold">{profile.username}</p>
             <p className="flex items-center gap-1 text-xs text-muted">
-              <MapPin size={12} /> {profile.city || 'Ville inconnue'}
+              <MapPin size={12} /> {profile.city || L('Ville inconnue', 'Unknown city')}
             </p>
             <p className="mt-1 text-xs font-bold text-gold">
-              Niveau {lvl.level} · {lvl.title}
+              {L('Niveau', 'Level')} {lvl.level} · {lvl.title}
             </p>
           </div>
         </div>
@@ -134,15 +136,18 @@ export default function ProfileTab() {
           <div className="h-2.5 overflow-hidden rounded-full bg-surface-2">
             <div className="h-full rounded-full bg-gradient-to-r from-gold to-emerald" style={{ width: `${lvl.progress * 100}%` }} />
           </div>
-          <p className="mt-1 text-right text-[11px] text-muted">{lvl.toNext} XP avant le niveau {lvl.level + 1}</p>
+          <p className="mt-1 text-right text-[11px] text-muted">{L(`${lvl.toNext} XP avant le niveau ${lvl.level + 1}`, `${lvl.toNext} XP to level ${lvl.level + 1}`)}</p>
           <div className="mt-3 grid grid-cols-4 gap-2 text-center">
             <Stat icon={<Flame size={16} className="fill-gold text-gold" />} value={streak} label="Streak" />
             <Stat icon={<Sparkles size={16} className="text-gold" />} value={profile.xp} label="XP" />
             <Stat icon={<Coins size={16} className="text-gold" />} value={profile.kazicoins} label="Coins" />
-            <Stat icon={<Trophy size={16} className="text-gold" />} value={profile.stats.bestScore} label="Record" />
+            <Stat icon={<Trophy size={16} className="text-gold" />} value={profile.stats.bestScore} label={L('Record', 'Best')} />
           </div>
           <p className="mt-3 text-center text-xs text-muted">
-            🛡️ {profile.streakShields} bouclier(s) · ⚡ {profile.energyRefills} recharge(s) · {profile.stats.runsWon}/{profile.stats.runsPlayed} mois réussis
+            {L(
+              `🛡️ ${profile.streakShields} bouclier(s) · ⚡ ${profile.energyRefills} recharge(s) · ${profile.stats.runsWon}/${profile.stats.runsPlayed} mois réussis`,
+              `🛡️ ${profile.streakShields} shield(s) · ⚡ ${profile.energyRefills} refill(s) · ${profile.stats.runsWon}/${profile.stats.runsPlayed} months completed`,
+            )}
           </p>
         </div>
       </section>
@@ -153,24 +158,24 @@ export default function ProfileTab() {
         <div className="min-w-0 flex-1 text-sm">
           {isCloud ? (
             <>
-              <p className="font-bold">Progression synchronisée</p>
+              <p className="font-bold">{L('Progression synchronisée', 'Progress synced')}</p>
               <p className="truncate text-xs text-muted">{email}</p>
             </>
           ) : (
             <>
-              <p className="font-bold">Mode invité · démo locale</p>
-              <p className="text-xs text-muted">{isSupabaseConfigured ? 'Sauvegardé uniquement sur ce téléphone.' : 'Supabase non configuré : tout reste sur cet appareil.'}</p>
+              <p className="font-bold">{L('Mode invité · démo locale', 'Guest mode · local demo')}</p>
+              <p className="text-xs text-muted">{isSupabaseConfigured ? L('Sauvegardé uniquement sur ce téléphone.', 'Saved on this phone only.') : L('Supabase non configuré : tout reste sur cet appareil.', 'Supabase is not configured: everything stays on this device.')}</p>
             </>
           )}
         </div>
         {isSupabaseConfigured &&
           (user ? (
-            <button onClick={() => void signOut()} className="btn-ghost px-3 py-2 text-xs" aria-label="Se déconnecter">
+            <button onClick={() => void signOut()} className="btn-ghost px-3 py-2 text-xs" aria-label={L('Se déconnecter', 'Log out')}>
               <LogOut size={14} />
             </button>
           ) : (
             <button onClick={() => openAuth()} className="btn-primary px-3 py-2 text-xs">
-              Créer un compte
+              {L('Créer un compte', 'Create an account')}
             </button>
           ))}
       </section>
@@ -195,7 +200,7 @@ export default function ProfileTab() {
 
       {/* Boutique KaziCoins */}
       <section>
-        <h2 className="mb-2 px-1 text-lg font-extrabold">Boutique KaziCoins</h2>
+        <h2 className="mb-2 px-1 text-lg font-extrabold">{L('Boutique KaziCoins', 'KaziCoins shop')}</h2>
         <div className="grid grid-cols-2 gap-3">
           {(['streakShield', 'energyRefill'] as const).map((k) => {
             const it = COIN_ITEMS[k];
@@ -227,8 +232,8 @@ export default function ProfileTab() {
 
       {/* Packs premium */}
       <section id="packs" className="scroll-mt-24">
-        <h2 className="mb-1 px-1 text-lg font-extrabold">Packs Premium</h2>
-        <p className="mb-2 px-1 text-xs text-muted">Paiement unique, sans abonnement · le pack reste à toi, sur tous tes téléphones.</p>
+        <h2 className="mb-1 px-1 text-lg font-extrabold">{L('Packs Premium', 'Premium Packs')}</h2>
+        <p className="mb-2 px-1 text-xs text-muted">{L('Paiement unique, sans abonnement · le pack reste à toi, sur tous tes téléphones.', 'One-time payment, no subscription · the pack stays yours, on all your phones.')}</p>
         <div className="space-y-3">
           {PREMIUM_PACKS.map((pack) => {
             const owned = !pack.external && hasPack(pack.id);
@@ -258,7 +263,7 @@ export default function ProfileTab() {
                 <div className="border-t border-line/70 px-4 py-3">
                   {owned ? (
                     <p className="flex items-center justify-center gap-2 text-sm font-extrabold text-emerald">
-                      <Check size={16} /> Débloqué
+                      <Check size={16} /> {L('Débloqué', 'Unlocked')}
                     </p>
                   ) : (
                     <button
@@ -268,14 +273,14 @@ export default function ProfileTab() {
                     >
                       {paying === pack.id ? (
                         <>
-                          <Loader2 size={16} className="animate-spin" /> Ouverture du paiement…
+                          <Loader2 size={16} className="animate-spin" /> {L('Ouverture du paiement…', 'Opening payment…')}
                         </>
                       ) : canBuy(pack) ? (
                         <>
-                          {pack.external ? 'Obtenir les modèles' : 'Débloquer'} · {pack.price} <ExternalLink size={14} />
+                          {pack.external ? L('Obtenir les modèles', 'Get the templates') : L('Débloquer', 'Unlock')} · {pack.price} <ExternalLink size={14} />
                         </>
                       ) : (
-                        'Paiement bientôt disponible'
+                        L('Paiement bientôt disponible', 'Payment coming soon')
                       )}
                     </button>
                   )}
@@ -285,11 +290,14 @@ export default function ProfileTab() {
           })}
         </div>
         <p className="mt-2 px-1 text-[11px] text-muted">
-          Paiement sécurisé sur Chariow (moyens de paiement proposés selon ton pays). Ton pack est activé sur ton compte dès confirmation du paiement.
+          {L(
+            'Paiement sécurisé sur Chariow (moyens de paiement proposés selon ton pays). Ton pack est activé sur ton compte dès confirmation du paiement.',
+            'Secure payment on Chariow (payment methods depend on your country). Your pack is activated on your account as soon as payment is confirmed.',
+          )}
         </p>
         {user && (
           <button onClick={() => void restore()} disabled={restoring} className="btn-ghost mt-2 w-full py-2 text-xs">
-            {restoring ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} Restaurer mes achats
+            {restoring ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} {L('Restaurer mes achats', 'Restore my purchases')}
           </button>
         )}
       </section>
@@ -300,9 +308,27 @@ export default function ProfileTab() {
 
       {/* Réglages */}
       <section className="card space-y-2 p-4">
-        <h2 className="font-extrabold">Réglages</h2>
+        <h2 className="font-extrabold">{L('Réglages', 'Settings')}</h2>
+        <div className="flex items-center justify-between gap-3 rounded-2xl bg-surface-2/50 px-4 py-2.5">
+          <span className="flex items-center gap-2 text-sm font-bold">
+            <Languages size={16} /> {L('Langue', 'Language')}
+          </span>
+          <div className="flex rounded-xl bg-surface-2 p-0.5 text-xs font-bold" role="group" aria-label={L('Langue', 'Language')}>
+            {(['fr', 'en'] as const).map((lang) => (
+              <button
+                key={lang}
+                onClick={() => setLang(lang)}
+                aria-pressed={LANG === lang}
+                className={`rounded-lg px-3 py-1 ${LANG === lang ? 'bg-gold text-slate-900' : 'text-muted'}`}
+              >
+                {lang === 'fr' ? 'Français' : 'English'}
+              </button>
+            ))}
+          </div>
+        </div>
         <button onClick={() => update((p) => ({ ...p, theme: p.theme === 'dark' ? 'light' : 'dark' }))} className="btn-ghost w-full justify-start">
-          {profile.theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />} Thème {profile.theme === 'dark' ? 'clair' : 'sombre'}
+          {profile.theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}{' '}
+          {profile.theme === 'dark' ? L('Thème clair', 'Light theme') : L('Thème sombre', 'Dark theme')}
         </button>
         {confirmReset ? (
           <div className="grid grid-cols-2 gap-2">
@@ -313,43 +339,46 @@ export default function ProfileTab() {
               }}
               className="btn bg-coral text-white"
             >
-              Confirmer
+              {L('Confirmer', 'Confirm')}
             </button>
             <button onClick={() => setConfirmReset(false)} className="btn-ghost">
-              Annuler
+              {L('Annuler', 'Cancel')}
             </button>
           </div>
         ) : (
           <button onClick={() => setConfirmReset(true)} className="btn-ghost w-full justify-start text-coral">
-            <RotateCcw size={16} /> Réinitialiser ma progression
+            <RotateCcw size={16} /> {L('Réinitialiser ma progression', 'Reset my progress')}
           </button>
         )}
         {user &&
           (confirmDelete ? (
             <div className="space-y-2 rounded-2xl bg-coral/10 p-3">
               <p className="text-xs text-ink/85">
-                Ton compte, ta progression en ligne et ta place au classement seront supprimés définitivement. Les packs achetés seront perdus.
+                {L(
+                  'Ton compte, ta progression en ligne et ta place au classement seront supprimés définitivement. Les packs achetés seront perdus.',
+                  'Your account, your online progress and your leaderboard place will be permanently deleted. Purchased packs will be lost.',
+                )}
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <button onClick={() => void removeAccount()} className="btn bg-coral text-white">
-                  Supprimer
+                  {L('Supprimer', 'Delete')}
                 </button>
                 <button onClick={() => setConfirmDelete(false)} className="btn-ghost">
-                  Annuler
+                  {L('Annuler', 'Cancel')}
                 </button>
               </div>
             </div>
           ) : (
             <button onClick={() => setConfirmDelete(true)} className="btn-ghost w-full justify-start text-coral">
-              <Trash2 size={16} /> Supprimer mon compte
+              <Trash2 size={16} /> {L('Supprimer mon compte', 'Delete my account')}
             </button>
           ))}
         <div className="flex gap-2 pt-1">
           <a href={LEGAL_LINKS.terms} target="_blank" rel="noopener" className="btn-ghost flex-1 py-2 text-xs">
-            <FileText size={14} /> CGU / CGV
+            <FileText size={14} /> {L('CGU / CGV', 'Terms')}
           </a>
           <a href={LEGAL_LINKS.privacy} target="_blank" rel="noopener" className="btn-ghost flex-1 py-2 text-xs">
-            <Shield size={14} /> Confidentialité
+            <Shield size={14} /> {L('Confidentialité', 'Privacy')}
           </a>
         </div>
       </section>
@@ -370,7 +399,7 @@ function Stat({ icon, value, label }: { icon: ReactNode; value: number; label: s
   return (
     <div className="rounded-2xl bg-surface-2/60 px-1 py-2">
       <div className="flex justify-center">{icon}</div>
-      <p className="mt-0.5 text-base font-extrabold">{value.toLocaleString('fr-FR')}</p>
+      <p className="mt-0.5 text-base font-extrabold">{value.toLocaleString(LOCALE)}</p>
       <p className="text-[10px] font-bold uppercase text-muted">{label}</p>
     </div>
   );

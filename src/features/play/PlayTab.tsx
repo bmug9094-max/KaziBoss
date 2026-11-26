@@ -28,6 +28,7 @@ import GaugeBar from './GaugeBar';
 import OutcomePanel from './OutcomePanel';
 import ScenarioSwipe from './ScenarioSwipe';
 import SectorPicker from './SectorPicker';
+import { L, usd } from '../../i18n';
 
 function loadRun(): RunState {
   const r = loadJSON<RunState>('run', NEW_RUN);
@@ -60,7 +61,7 @@ export default function PlayTab() {
     if (!def || !spendCoins(def.coinPrice)) return;
     update((p) => ({ ...p, coinUnlocks: [...p.coinUnlocks, sectorUnlockKey(id)] }));
     setSector(id);
-    notify(`${def.emoji} Secteur débloqué : ${def.name}`, 'gold');
+    notify(`${def.emoji} ${L('Secteur débloqué :', 'Sector unlocked:')} ${def.name}`, 'gold');
   };
 
   const choose = (c: 'a' | 'b') => {
@@ -112,14 +113,14 @@ export default function PlayTab() {
     // La partie avait été comptée comme terminée : on annule ce décompte.
     update((p) => ({ ...p, stats: { ...p.stats, runsPlayed: Math.max(0, p.stats.runsPlayed - 1) } }));
     setRun(secondChance(run, packs));
-    notify('❤️ Seconde chance ! Ne refais pas la même erreur.', 'success');
+    notify(L('❤️ Seconde chance ! Ne refais pas la même erreur.', "❤️ Second chance! Don't make the same mistake again."), 'success');
   };
 
   const handleEnergyRefill = () => {
     if (profile.energyRefills <= 0) return;
     update((p) => ({ ...p, energyRefills: p.energyRefills - 1 }));
     setRun((r) => applyBoost(r, { energy: ENERGY_REFILL_AMOUNT }));
-    notify(`⚡ +${ENERGY_REFILL_AMOUNT} énergie`, 'success');
+    notify(`⚡ +${ENERGY_REFILL_AMOUNT} ${L('énergie', 'energy')}`, 'success');
   };
 
   const preview: Effects | null = card && previewChoice ? card[previewChoice].effects : null;
@@ -130,34 +131,39 @@ export default function PlayTab() {
       <div className="flex flex-col gap-4">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="card overflow-hidden">
           <div className="bg-gradient-to-br from-gold/25 via-transparent to-emerald/15 p-6">
-            <p className="text-xs font-extrabold uppercase tracking-widest text-gold">Simulation terrain</p>
+            <p className="text-xs font-extrabold uppercase tracking-widest text-gold">{L('Simulation terrain', 'Field simulation')}</p>
             <h1 className="mt-2 text-3xl font-extrabold leading-tight">
-              30 jours pour devenir <span className="text-gold">KaziBoss</span>
+              {L('30 jours pour devenir', '30 days to become')} <span className="text-gold">KaziBoss</span>
             </h1>
             <p className="mt-2 text-[15px] text-ink/80">
-              Tu ouvres ta boutique avec <b>100 $</b>. Chaque jour, une décision. Garde tes 4 jauges au-dessus de zéro… et apprends de chaque choix.
+              {L('Tu ouvres ta boutique avec', 'You open your shop with')} <b>{usd(100)}</b>.{' '}
+              {L(
+                'Chaque jour, une décision. Garde tes 4 jauges au-dessus de zéro… et apprends de chaque choix.',
+                'One decision every day. Keep your 4 gauges above zero… and learn from every choice.',
+              )}
             </p>
           </div>
           <div className="px-5 pb-5">
             <GaugeBar gauges={NEW_RUN.gauges} />
             <ul className="mt-4 space-y-1.5 text-sm text-ink/80">
-              <li>👈 Glisse à gauche pour le choix A, 👉 à droite pour le B.</li>
-              <li>● Un point au-dessus d'une jauge = elle va bouger (gros point = gros impact).</li>
-              <li>🛒 Chaque soir, ton stock se vend selon ta réputation.</li>
+              <li>{L('👈 Glisse à gauche pour le choix A, 👉 à droite pour le B.', '👈 Swipe left for choice A, 👉 right for B.')}</li>
+              <li>{L("● Un point au-dessus d'une jauge = elle va bouger (gros point = gros impact).", '● A dot above a gauge = it will move (big dot = big impact).')}</li>
+              <li>{L('🛒 Chaque soir, ton stock se vend selon ta réputation.', '🛒 Every evening, your stock sells according to your reputation.')}</li>
             </ul>
           </div>
         </motion.div>
 
         {profile.stats.bestScore > 0 && (
           <p className="text-center text-sm text-muted">
-            Meilleur score : <b className="text-gold">{profile.stats.bestScore}</b> · Meilleure journée : J{profile.stats.bestDay}
+            {L('Meilleur score :', 'Best score:')} <b className="text-gold">{profile.stats.bestScore}</b> · {L('Meilleure journée : J', 'Best day: D')}
+            {profile.stats.bestDay}
           </p>
         )}
 
         <SectorPicker selected={sector} onSelect={setSector} onUnlock={unlockSector} />
 
         <button onClick={begin} className="btn-primary py-4 text-base">
-          <Play size={20} className="fill-slate-900" /> {sector ? `Lancer : ${getSector(sector)?.name}` : 'Ouvrir ma boutique'}
+          <Play size={20} className="fill-slate-900" /> {sector ? `${L('Lancer :', 'Start:')} ${getSector(sector)?.name}` : L('Ouvrir ma boutique', 'Open my shop')}
         </button>
 
         {isSupabaseConfigured && !user && (
@@ -167,8 +173,13 @@ export default function PlayTab() {
           >
             <Cloud size={18} className="mt-0.5 shrink-0 text-gold" />
             <span className="text-ink/85">
-              <b className="block text-sm text-ink">Sauvegarde ta progression · +{SIGNUP_BONUS} KaziCoins 🎁</b>
-              En mode invité, tout reste sur ce téléphone. Crée ton compte gratuit en 30 secondes.
+              <b className="block text-sm text-ink">
+                {L('Sauvegarde ta progression', 'Save your progress')} · +{SIGNUP_BONUS} KaziCoins 🎁
+              </b>
+              {L(
+                'En mode invité, tout reste sur ce téléphone. Crée ton compte gratuit en 30 secondes.',
+                'In guest mode, everything stays on this phone. Create your free account in 30 seconds.',
+              )}
             </span>
           </button>
         )}
@@ -197,7 +208,7 @@ export default function PlayTab() {
     <div className="flex flex-col gap-4 short:gap-2.5">
       <div className="flex items-center justify-between">
         <p className="flex items-center gap-2 text-sm font-extrabold">
-          <CalendarDays size={16} className="text-gold" /> Jour {run.day}
+          <CalendarDays size={16} className="text-gold" /> {L('Jour', 'Day')} {run.day}
           <span className="text-muted">/ {MAX_DAYS}</span>
           {runSector && (
             <span className="chip text-[11px]" title={runSector.name}>
@@ -207,7 +218,7 @@ export default function PlayTab() {
         </p>
         {run.status === 'playing' && profile.energyRefills > 0 && run.gauges.energy < 100 && (
           <button onClick={handleEnergyRefill} className="chip text-gold hover:bg-surface-2">
-            <Zap size={13} className="fill-gold" /> Recharge ({profile.energyRefills})
+            <Zap size={13} className="fill-gold" /> {L('Recharge', 'Refill')} ({profile.energyRefills})
           </button>
         )}
       </div>

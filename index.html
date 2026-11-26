@@ -70,6 +70,25 @@
       <div class="s-tag">Deviens le boss de ton business</div>
       <div class="s-bar"><i></i></div>
     </div>
+    <script>
+      // Écran d'ouverture en anglais si besoin (même règle que src/i18n.ts).
+      (function () {
+        var lang = 'fr';
+        try {
+          var saved = localStorage.getItem('kaziboss.lang');
+          if (saved === '"fr"' || saved === '"en"') lang = JSON.parse(saved);
+          else if (!localStorage.getItem('kaziboss.profile')) {
+            var nav = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+            lang = !nav || nav.toLowerCase().indexOf('fr') === 0 ? 'fr' : 'en';
+          }
+        } catch (e) {}
+        if (lang !== 'en') return;
+        document.documentElement.lang = 'en';
+        var s = document.getElementById('splash');
+        s.setAttribute('aria-label', 'Loading KaziBoss');
+        s.querySelector('.s-tag').textContent = 'Become the boss of your business';
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

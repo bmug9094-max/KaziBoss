@@ -5,6 +5,7 @@ import { copyLink, shareUrl } from '../../lib/share';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { todayISO } from '../../lib/storage';
 import { usePlayer } from '../../state/PlayerContext';
+import { L } from '../../i18n';
 
 /** Carte « Invite tes amis » : bonus de partage quotidien + parrainage. */
 export default function InviteCard({ onSignup }: { onSignup: () => void }) {
@@ -22,24 +23,24 @@ export default function InviteCard({ onSignup }: { onSignup: () => void }) {
   }, [referralStats]);
 
   const copy = async () => {
-    notify((await copyLink(link)) ? '🔗 Lien copié !' : 'Copie impossible : partage plutôt le lien.', 'info');
+    notify((await copyLink(link)) ? L('🔗 Lien copié !', '🔗 Link copied!') : L('Copie impossible : partage plutôt le lien.', 'Unable to copy: share the link instead.'), 'info');
   };
 
   return (
     <section className="card overflow-hidden">
       <div className="bg-gradient-to-br from-emerald/20 via-transparent to-gold/15 p-4">
         <h2 className="flex items-center gap-2 text-lg font-extrabold">
-          <Gift size={20} className="text-emerald" /> Invite tes amis
+          <Gift size={20} className="text-emerald" /> {L('Invite tes amis', 'Invite your friends')}
         </h2>
         <ul className="mt-2 space-y-1 text-xs text-ink/85">
           <li>
-            📣 Partage KaziBoss : <b className="text-gold">+{SHARE_DAILY_BONUS} KaziCoins</b> une fois par jour
-            {bonusAvailable ? '' : ' (déjà reçu aujourd’hui)'}.
+            {L('📣 Partage KaziBoss :', '📣 Share KaziBoss:')} <b className="text-gold">+{SHARE_DAILY_BONUS} KaziCoins</b> {L('une fois par jour', 'once a day')}
+            {bonusAvailable ? '' : L(' (déjà reçu aujourd’hui)', ' (already received today)')}.
           </li>
           {isSupabaseConfigured && (
             <li>
-              🤝 Un ami s'inscrit avec ton lien et atteint {REFERRAL_XP_THRESHOLD} XP : <b className="text-gold">+{REFERRAL_BONUS}</b> pour toi,{' '}
-              <b className="text-gold">+{REFEREE_BONUS}</b> pour lui.
+              {L(`🤝 Un ami s'inscrit avec ton lien et atteint ${REFERRAL_XP_THRESHOLD} XP :`, `🤝 A friend signs up with your link and reaches ${REFERRAL_XP_THRESHOLD} XP:`)}{' '}
+              <b className="text-gold">+{REFERRAL_BONUS}</b> {L('pour toi,', 'for you,')} <b className="text-gold">+{REFEREE_BONUS}</b> {L('pour lui.', 'for them.')}
             </li>
           )}
         </ul>
@@ -47,20 +48,24 @@ export default function InviteCard({ onSignup }: { onSignup: () => void }) {
       <div className="space-y-2 p-4 pt-3">
         <div className="grid grid-cols-[1fr_auto] gap-2">
           <button onClick={() => void shareInvite()} className="btn-emerald py-2.5 text-sm">
-            <Share2 size={16} /> Partager le jeu
+            <Share2 size={16} /> {L('Partager le jeu', 'Share the game')}
           </button>
-          <button onClick={() => void copy()} className="btn-ghost px-3 py-2.5" aria-label="Copier le lien">
+          <button onClick={() => void copy()} className="btn-ghost px-3 py-2.5" aria-label={L('Copier le lien', 'Copy the link')}>
             <Copy size={16} />
           </button>
         </div>
         {user && stats && (
           <p className="flex items-center gap-1.5 text-xs text-muted">
-            <Users size={13} /> {stats.invited} ami(s) inscrit(s) avec ton lien · {stats.rewarded} bonus gagné(s)
+            <Users size={13} />{' '}
+            {L(
+              `${stats.invited} ami(s) inscrit(s) avec ton lien · ${stats.rewarded} bonus gagné(s)`,
+              `${stats.invited} friend(s) signed up with your link · ${stats.rewarded} bonus(es) earned`,
+            )}
           </p>
         )}
         {isSupabaseConfigured && !user && (
           <button onClick={onSignup} className="text-xs font-bold text-gold">
-            Crée un compte pour obtenir ton lien de parrainage →
+            {L('Crée un compte pour obtenir ton lien de parrainage →', 'Create an account to get your referral link →')}
           </button>
         )}
       </div>

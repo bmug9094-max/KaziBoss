@@ -1,4 +1,5 @@
-import { SCENARIO_CARDS } from '../data/gameContent';
+import { SCENARIO_CARDS } from '../data/content';
+import { L } from '../i18n';
 import type { CardCategory, Effects, Gauge, Gauges, PackId, ScenarioCard, SectorId } from '../types';
 
 export const MAX_DAYS = 30;
@@ -183,13 +184,40 @@ export function computeScore(run: RunState): number {
 
 // ───────────── Analyse pédagogique de la faillite ─────────────
 export const GAUGE_META: Record<Gauge, { label: string; color: string }> = {
-  cash: { label: 'Trésorerie', color: '#F59E0B' },
+  cash: { label: L('Trésorerie', 'Cash'), color: '#F59E0B' },
   stock: { label: 'Stock', color: '#38BDF8' },
-  reputation: { label: 'Réputation', color: '#10B981' },
-  energy: { label: 'Énergie', color: '#EF4444' },
+  reputation: { label: L('Réputation', 'Reputation'), color: '#10B981' },
+  energy: { label: L('Énergie', 'Energy'), color: '#EF4444' },
 };
 
-export const FAILURE_ANALYSIS: Record<Gauge, { title: string; cause: string; fix: string }> = {
+const FAILURE_ANALYSIS_EN: Record<Gauge, { title: string; cause: string; fix: string }> = {
+  cash: {
+    title: 'Out of cash',
+    cause:
+      "Your cash box hit zero: you can no longer restock or pay your bills. It is the number one reason small businesses close, even profitable ones.",
+    fix: 'Always keep a safety reserve, limit customer credit and avoid big purchases that empty the cash box.',
+  },
+  stock: {
+    title: 'Completely out of stock',
+    cause:
+      "Your shelves are empty: no goods means no sales, and customers get used to shopping elsewhere.",
+    fix: 'Restock before you run out, keep safety stock on your best sellers and use more than one supplier.',
+  },
+  reputation: {
+    title: 'Reputation destroyed',
+    cause:
+      "Nobody in the neighbourhood trusts you any more. Without customers, neither your stock nor your cash is worth anything.",
+    fix: "Never sell dubious products, stay professional in conflicts and invest in your customer relationships.",
+  },
+  energy: {
+    title: 'Burned-out boss',
+    cause:
+      "You carried everything alone until you were exhausted. A worn-out boss makes mistakes and ends up closing.",
+    fix: 'Plan your rest, delegate simple tasks and never replace an essential expense with your own fatigue.',
+  },
+};
+
+const FAILURE_ANALYSIS_FR: Record<Gauge, { title: string; cause: string; fix: string }> = {
   cash: {
     title: 'Faillite de trésorerie',
     cause:
@@ -215,6 +243,8 @@ export const FAILURE_ANALYSIS: Record<Gauge, { title: string; cause: string; fix
     fix: 'Planifie ton repos, délègue les tâches simples et ne remplace pas une dépense essentielle par ta propre fatigue.',
   },
 };
+
+export const FAILURE_ANALYSIS = L(FAILURE_ANALYSIS_FR, FAILURE_ANALYSIS_EN);
 
 export interface CostlyDecision {
   day: number;

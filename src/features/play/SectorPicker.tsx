@@ -3,6 +3,7 @@ import { SECTORS, isSectorUnlocked } from '../../config/sectors';
 import { goTo } from '../../lib/ui';
 import { usePlayer } from '../../state/PlayerContext';
 import type { SectorId } from '../../types';
+import { L } from '../../i18n';
 
 /** Choix du secteur d'activité pour le mois (boutique de quartier ou secteur débloqué). */
 export default function SectorPicker({
@@ -18,12 +19,12 @@ export default function SectorPicker({
 
   return (
     <section>
-      <h2 className="mb-2 px-1 text-lg font-extrabold">Ton secteur ce mois-ci</h2>
+      <h2 className="mb-2 px-1 text-lg font-extrabold">{L('Ton secteur ce mois-ci', 'Your sector this month')}</h2>
       <div className="space-y-2">
         <Option
           emoji="🏪"
-          name="Boutique de quartier"
-          tagline="Le classique : stock, clients, famille et imprévus."
+          name={L('Boutique de quartier', 'Neighbourhood shop')}
+          tagline={L('Le classique : stock, clients, famille et imprévus.', 'The classic: stock, customers, family and surprises.')}
           active={selected === null}
           onClick={() => onSelect(null)}
         />
@@ -42,12 +43,12 @@ export default function SectorPicker({
                   <Lock size={12} className="text-muted" /> {s.name}
                 </p>
                 <p className="text-xs text-muted">
-                  Niveau {s.unlockLevel}
+                  {L('Niveau', 'Level')} {s.unlockLevel}
                   {s.pack && (
                     <>
                       {' · '}
                       <button onClick={() => goTo('profile', `pack-${s.pack}`)} className="font-bold text-gold underline-offset-2 hover:underline">
-                        inclus dans le Pack Agri →
+                        {L('inclus dans le Pack Agri →', 'included in the Agri Pack →')}
                       </button>
                     </>
                   )}
@@ -57,7 +58,7 @@ export default function SectorPicker({
                 onClick={() => onUnlock(s.id)}
                 disabled={profile.kazicoins < s.coinPrice}
                 className="btn-primary shrink-0 px-3 py-2 text-xs"
-                aria-label={`Débloquer ${s.name} pour ${s.coinPrice} KaziCoins`}
+                aria-label={L(`Débloquer ${s.name} pour ${s.coinPrice} KaziCoins`, `Unlock ${s.name} for ${s.coinPrice} KaziCoins`)}
               >
                 <Coins size={14} /> {s.coinPrice}
               </button>

@@ -1,13 +1,14 @@
 import { motion } from 'framer-motion';
 import { Gamepad2, GraduationCap, Store, Wrench, type LucideIcon } from 'lucide-react';
+import { L } from '../i18n';
 
 export type TabId = 'play' | 'learn' | 'tools' | 'profile';
 
 const ITEMS: { id: TabId; label: string; icon: LucideIcon }[] = [
-  { id: 'play', label: 'Jouer', icon: Gamepad2 },
-  { id: 'learn', label: 'Apprendre', icon: GraduationCap },
-  { id: 'tools', label: 'Outils', icon: Wrench },
-  { id: 'profile', label: 'Boutique', icon: Store },
+  { id: 'play', label: L('Jouer', 'Play'), icon: Gamepad2 },
+  { id: 'learn', label: L('Apprendre', 'Learn'), icon: GraduationCap },
+  { id: 'tools', label: L('Outils', 'Tools'), icon: Wrench },
+  { id: 'profile', label: L('Boutique', 'Shop'), icon: Store },
 ];
 
 export default function BottomNav({ active, onChange }: { active: TabId; onChange: (t: TabId) => void }) {

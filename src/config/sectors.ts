@@ -1,5 +1,6 @@
 import { levelInfo } from '../lib/progress';
 import type { PackId, PlayerProfile, SectorId } from '../types';
+import { L } from '../i18n';
 
 /**
  * SECTEURS D'ACTIVITÉ
@@ -25,25 +26,25 @@ export interface SectorDef {
 export const SECTORS: SectorDef[] = [
   {
     id: 'commerce',
-    name: 'Commerce & Distribution',
+    name: L('Commerce & Distribution', 'Trade & Distribution'),
     emoji: '🛒',
-    tagline: 'Dépôt, demi-gros, revendeuses et fournisseurs exigeants.',
+    tagline: L('Dépôt, demi-gros, revendeuses et fournisseurs exigeants.', 'Depot, semi-wholesale, resellers and demanding suppliers.'),
     unlockLevel: 2,
     coinPrice: 150,
   },
   {
     id: 'services',
-    name: 'Services & Digital',
+    name: L('Services & Digital', 'Services & Digital'),
     emoji: '📱',
-    tagline: 'Atelier de réparation, cyber, livraison et vente en ligne.',
+    tagline: L('Atelier de réparation, cyber, livraison et vente en ligne.', 'Repair shop, cyber café, delivery and online sales.'),
     unlockLevel: 4,
     coinPrice: 250,
   },
   {
     id: 'agri',
-    name: 'Agri-Business & Transformation',
+    name: L('Agri-Business & Transformation', 'Agri-Business & Processing'),
     emoji: '🌾',
-    tagline: 'Récolte, transformation, conservation et circuits de vente.',
+    tagline: L('Récolte, transformation, conservation et circuits de vente.', 'Harvest, processing, storage and sales channels.'),
     unlockLevel: 6,
     coinPrice: 350,
     pack: 'agri_import',

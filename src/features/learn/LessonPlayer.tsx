@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { playChime, playSuccess } from '../../lib/sound';
 import { usePlayer } from '../../state/PlayerContext';
 import type { Lesson, ModuleColor, QuizKind } from '../../types';
+import { L } from '../../i18n';
 
 const KIND_LABEL: Record<QuizKind, string> = {
   qcm: 'Question',
-  'vrai-faux': 'Vrai ou faux ?',
-  calcul: 'Calcul rapide',
-  situation: 'Mise en situation',
+  'vrai-faux': L('Vrai ou faux ?', 'True or false?'),
+  calcul: L('Calcul rapide', 'Quick maths'),
+  situation: L('Mise en situation', 'Real-life situation'),
 };
 
 const COINS_PER_CORRECT = 5;
@@ -63,7 +64,7 @@ export default function LessonPlayer({ lesson, moduleColor, onClose }: { lesson:
     <div className="fixed inset-0 z-40 flex justify-center bg-bg">
       <div className="pt-safe pb-safe flex w-full max-w-md flex-col px-5">
         <div className="flex items-center gap-3 py-3">
-          <button onClick={onClose} className="rounded-full p-1.5 text-muted hover:bg-surface-2 hover:text-ink" aria-label="Quitter la leçon">
+          <button onClick={onClose} className="rounded-full p-1.5 text-muted hover:bg-surface-2 hover:text-ink" aria-label={L('Quitter la leçon', 'Leave the lesson')}>
             <X size={22} />
           </button>
           <div className="h-3 flex-1 overflow-hidden rounded-full bg-surface-2">
@@ -76,10 +77,10 @@ export default function LessonPlayer({ lesson, moduleColor, onClose }: { lesson:
             {finished ? (
               <motion.div key="done" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center pt-10 text-center">
                 <Trophy size={72} className="fill-gold text-gold" />
-                <h2 className="mt-4 text-2xl font-extrabold">Leçon terminée !</h2>
+                <h2 className="mt-4 text-2xl font-extrabold">{L('Leçon terminée !', 'Lesson complete!')}</h2>
                 <p className="mt-1 text-muted">{lesson.title}</p>
                 <p className="mt-4 text-lg font-bold">
-                  {correct}/{lesson.quiz.length} bonnes réponses
+                  {correct}/{lesson.quiz.length} {L('bonnes réponses', 'correct answers')}
                 </p>
                 <div className="mt-4 flex gap-3">
                   <span className="chip px-4 py-2 text-base text-gold">
@@ -89,12 +90,12 @@ export default function LessonPlayer({ lesson, moduleColor, onClose }: { lesson:
                     <Coins size={16} /> +{finished.coins}
                   </span>
                 </div>
-                {alreadyDone && <p className="mt-3 text-xs text-muted">Révision : récompenses réduites.</p>}
+                {alreadyDone && <p className="mt-3 text-xs text-muted">{L('Révision : récompenses réduites.', 'Review: reduced rewards.')}</p>}
               </motion.div>
             ) : inTheory ? (
               <motion.div key={`t${step}`} initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
                 <p className="text-xs font-extrabold uppercase tracking-widest text-muted">
-                  Micro-carte {step + 1}/{lesson.theory.length}
+                  {L('Micro-carte', 'Micro-card')} {step + 1}/{lesson.theory.length}
                 </p>
                 <div className="card mt-3 p-6">
                   <div className="text-6xl">{lesson.theory[step].emoji}</div>
@@ -149,7 +150,7 @@ export default function LessonPlayer({ lesson, moduleColor, onClose }: { lesson:
                 className={`mb-3 rounded-2xl p-4 ${picked === quiz.answer ? 'bg-emerald/15' : 'bg-coral/15'}`}
               >
                 <p className={`font-extrabold ${picked === quiz.answer ? 'text-emerald' : 'text-coral'}`}>
-                  {picked === quiz.answer ? `Bravo ! +${alreadyDone ? 1 : COINS_PER_CORRECT} KaziCoins` : 'Pas tout à fait…'}
+                  {picked === quiz.answer ? `${L('Bravo !', 'Well done!')} +${alreadyDone ? 1 : COINS_PER_CORRECT} KaziCoins` : L('Pas tout à fait…', 'Not quite…')}
                 </p>
                 <p className="mt-1 text-sm text-ink/85">{quiz.explanation}</p>
               </motion.div>
@@ -157,11 +158,11 @@ export default function LessonPlayer({ lesson, moduleColor, onClose }: { lesson:
           </AnimatePresence>
           {finished ? (
             <button onClick={onClose} className="btn-primary w-full py-4 text-base">
-              Continuer
+              {L('Continuer', 'Continue')}
             </button>
           ) : (
             <button onClick={next} disabled={!inTheory && !answered} className="btn-primary w-full py-4 text-base">
-              {inTheory ? 'Compris' : 'Continuer'} <ArrowRight size={18} />
+              {inTheory ? L('Compris', 'Got it') : L('Continuer', 'Continue')} <ArrowRight size={18} />
             </button>
           )}
         </div>

@@ -2,6 +2,7 @@ import { Loader2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import Sheet from '../../components/Sheet';
 import { usePlayer } from '../../state/PlayerContext';
+import { L } from '../../i18n';
 
 /** S'ouvre automatiquement quand le joueur revient du lien « mot de passe oublié ». */
 export default function PasswordRecoverySheet() {
@@ -13,7 +14,7 @@ export default function PasswordRecoverySheet() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (password.length < 8) return setError('8 caractères minimum.');
+    if (password.length < 8) return setError(L('8 caractères minimum.', 'At least 8 characters.'));
     setBusy(true);
     const res = await updatePassword(password);
     setBusy(false);
@@ -21,16 +22,16 @@ export default function PasswordRecoverySheet() {
   };
 
   return (
-    <Sheet open={passwordRecovery && !dismissed} onClose={() => setDismissed(true)} title="Nouveau mot de passe">
+    <Sheet open={passwordRecovery && !dismissed} onClose={() => setDismissed(true)} title={L('Nouveau mot de passe', 'New password')}>
       <form onSubmit={submit} className="space-y-3">
         <label className="block">
-          <span className="label">Choisis un nouveau mot de passe</span>
+          <span className="label">{L('Choisis un nouveau mot de passe', 'Choose a new password')}</span>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" required minLength={8} autoComplete="new-password" />
         </label>
         {error && <p className="rounded-2xl bg-coral/15 p-3 text-sm text-coral">{error}</p>}
         <button type="submit" disabled={busy} className="btn-primary w-full py-3.5">
           {busy && <Loader2 size={18} className="animate-spin" />}
-          Enregistrer
+          {L('Enregistrer', 'Save')}
         </button>
       </form>
     </Sheet>

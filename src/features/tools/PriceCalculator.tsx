@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { loadJSON, saveJSON } from '../../lib/storage';
 import { usePlayer } from '../../state/PlayerContext';
 import { Field, ResultRow, fmt, num } from './ui';
+import { L } from '../../i18n';
 
 interface PricingForm {
   currency: '$' | 'FC';
@@ -63,7 +64,7 @@ export default function PriceCalculator() {
     <div className="flex flex-col gap-4">
       <div className="card space-y-4 p-5">
         <div className="flex items-center justify-between">
-          <h2 className="font-extrabold">Calculateur de prix de vente</h2>
+          <h2 className="font-extrabold">{L('Calculateur de prix de vente', 'Selling price calculator')}</h2>
           <div className="flex rounded-xl bg-surface-2 p-0.5 text-xs font-bold">
             {(['$', 'FC'] as const).map((cur) => (
               <button key={cur} onClick={() => setF((s) => ({ ...s, currency: cur }))} className={`rounded-lg px-3 py-1 ${c === cur ? 'bg-gold text-slate-900' : 'text-muted'}`}>
@@ -73,42 +74,43 @@ export default function PriceCalculator() {
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Coût d'achat du lot" value={f.purchase} onChange={set('purchase')} suffix={c} />
-          <Field label="Nombre d'unités" value={f.quantity} onChange={set('quantity')} suffix="u." />
+          <Field label={L("Coût d'achat du lot", 'Purchase cost of the batch')} value={f.purchase} onChange={set('purchase')} suffix={c} />
+          <Field label={L("Nombre d'unités", 'Number of units')} value={f.quantity} onChange={set('quantity')} suffix={L('u.', 'pcs')} />
           <Field label="Transport" value={f.transport} onChange={set('transport')} suffix={c} />
-          <Field label="Frais fixes alloués" value={f.fixed} onChange={set('fixed')} suffix={c} hint="Part de loyer, électricité…" />
-          <Field label="Pertes estimées" value={f.losses} onChange={set('losses')} suffix="%" hint="Casse, périmés, vols" />
-          <Field label="Marge souhaitée" value={f.margin} onChange={set('margin')} suffix="%" hint="Sur le prix de vente" />
+          <Field label={L('Frais fixes alloués', 'Allocated fixed costs')} value={f.fixed} onChange={set('fixed')} suffix={c} hint={L('Part de loyer, électricité…', 'Share of rent, electricity…')} />
+          <Field label={L('Pertes estimées', 'Estimated losses')} value={f.losses} onChange={set('losses')} suffix="%" hint={L('Casse, périmés, vols', 'Breakage, expired goods, theft')} />
+          <Field label={L('Marge souhaitée', 'Target margin')} value={f.margin} onChange={set('margin')} suffix="%" hint={L('Sur le prix de vente', 'On the selling price')} />
         </div>
       </div>
 
       {r ? (
         <div className="card p-5">
-          <ResultRow label="Coût total du lot" value={fmt(r.totalCost, c)} />
-          <ResultRow label="Unités réellement vendables" value={`${Math.floor(r.sellable)} u.`} />
-          <ResultRow label="Coût de revient unitaire" value={fmt(r.unitCost, c)} tone="coral" />
+          <ResultRow label={L('Coût total du lot', 'Total batch cost')} value={fmt(r.totalCost, c)} />
+          <ResultRow label={L('Unités réellement vendables', 'Units you can actually sell')} value={`${Math.floor(r.sellable)} ${L('u.', 'pcs')}`} />
+          <ResultRow label={L('Coût de revient unitaire', 'Unit cost price')} value={fmt(r.unitCost, c)} tone="coral" />
           <div className="my-2 h-px bg-line" />
-          <ResultRow label="Prix de vente conseillé" value={fmt(r.price, c)} strong tone="gold" />
-          <p className="-mt-1 text-right text-[11px] text-muted">calcul exact : {fmt(r.rawPrice, c, c === '$' ? 3 : 0)} → arrondi commercial</p>
-          <ResultRow label="Bénéfice net par unité" value={fmt(r.unitProfit, c)} tone="emerald" />
-          <ResultRow label="Bénéfice net sur le lot" value={fmt(r.lotProfit, c)} strong tone="emerald" />
+          <ResultRow label={L('Prix de vente conseillé', 'Recommended selling price')} value={fmt(r.price, c)} strong tone="gold" />
+          <p className="-mt-1 text-right text-[11px] text-muted">{L('calcul exact :', 'exact figure:')} {fmt(r.rawPrice, c, c === '$' ? 3 : 0)} → {L('arrondi commercial', 'rounded up for sale')}</p>
+          <ResultRow label={L('Bénéfice net par unité', 'Net profit per unit')} value={fmt(r.unitProfit, c)} tone="emerald" />
+          <ResultRow label={L('Bénéfice net sur le lot', 'Net profit on the batch')} value={fmt(r.lotProfit, c)} strong tone="emerald" />
           <div className="mt-3 grid grid-cols-2 gap-2 text-center">
             <div className="rounded-2xl bg-surface-2/70 p-2">
               <p className="font-extrabold">{(r.realMargin * 100).toFixed(1)} %</p>
-              <p className="text-[10px] font-bold uppercase text-muted">Marge réelle</p>
+              <p className="text-[10px] font-bold uppercase text-muted">{L('Marge réelle', 'Real margin')}</p>
             </div>
             <div className="rounded-2xl bg-surface-2/70 p-2">
               <p className="font-extrabold">{(r.markup * 100).toFixed(1)} %</p>
-              <p className="text-[10px] font-bold uppercase text-muted">Majoration</p>
+              <p className="text-[10px] font-bold uppercase text-muted">{L('Majoration', 'Markup')}</p>
             </div>
           </div>
           <p className="mt-3 flex gap-2 text-xs text-muted">
             <Info size={14} className="mt-0.5 shrink-0 text-sky" />
-            Ne vends jamais en dessous de {fmt(r.unitCost, c)} : c'est ton seuil de perte. Marge et majoration ne sont pas le même chiffre.
+            {L('Ne vends jamais en dessous de', 'Never sell below')} {fmt(r.unitCost, c)}
+            {L(" : c'est ton seuil de perte. Marge et majoration ne sont pas le même chiffre.", ': that is your break-even point. Margin and markup are not the same number.')}
           </p>
         </div>
       ) : (
-        <p className="text-center text-sm text-muted">Renseigne au moins le coût d'achat et le nombre d'unités.</p>
+        <p className="text-center text-sm text-muted">{L("Renseigne au moins le coût d'achat et le nombre d'unités.", 'Enter at least the purchase cost and the number of units.')}</p>
       )}
     </div>
   );

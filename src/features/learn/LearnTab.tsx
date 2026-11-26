@@ -2,7 +2,8 @@ import { motion } from 'framer-motion';
 import { Check, Crown, Lock, Star } from 'lucide-react';
 import { useState } from 'react';
 import { COIN_ITEMS } from '../../config/shop';
-import { LEARNING_MODULES, TOTAL_QUIZ_COUNT } from '../../data/gameContent';
+import { LEARNING_MODULES, TOTAL_QUIZ_COUNT } from '../../data/content';
+import { L, usd } from '../../i18n';
 import { goTo } from '../../lib/ui';
 import { usePlayer } from '../../state/PlayerContext';
 import type { Lesson, LearningModule, ModuleColor } from '../../types';
@@ -33,18 +34,18 @@ export default function LearnTab() {
   const unlockModule4 = () => {
     if (!spendCoins(COIN_ITEMS.module4.price)) return;
     update((p) => ({ ...p, coinUnlocks: [...p.coinUnlocks, 'module4'] }));
-    notify('🚀 Module 4 débloqué !', 'gold');
+    notify(L('🚀 Module 4 débloqué !', '🚀 Module 4 unlocked!'), 'gold');
   };
 
   return (
     <div className="flex flex-col gap-6">
       <div className="card flex items-center justify-between p-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-muted">Ton parcours</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-muted">{L('Ton parcours', 'Your path')}</p>
           <p className="text-lg font-extrabold">
-            {totalDone}/{ordered.length} leçons
+            {totalDone}/{ordered.length} {L('leçons', 'lessons')}
           </p>
-          <p className="text-xs text-muted">{TOTAL_QUIZ_COUNT} quiz pratiques · KaziCoins à gagner</p>
+          <p className="text-xs text-muted">{TOTAL_QUIZ_COUNT} {L('quiz pratiques · KaziCoins à gagner', 'practice quizzes · KaziCoins to earn')}</p>
         </div>
         <div className="relative h-14 w-14">
           <svg viewBox="0 0 36 36" className="h-14 w-14 -rotate-90">
@@ -119,14 +120,14 @@ export default function LearnTab() {
             {premiumLocked && (
               <div className="card mt-4 p-4 text-center">
                 <Lock size={20} className="mx-auto text-sky" />
-                <p className="mt-1 text-sm font-bold">Module Premium</p>
-                <p className="text-xs text-muted">Débloque-le avec tes KaziCoins ou via le Pack Agri-Business.</p>
+                <p className="mt-1 text-sm font-bold">{L('Module Premium', 'Premium module')}</p>
+                <p className="text-xs text-muted">{L('Débloque-le avec tes KaziCoins ou via le Pack Agri-Business.', 'Unlock it with your KaziCoins or with the Agri-Business Pack.')}</p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <button onClick={unlockModule4} className="btn-primary px-2 text-xs">
                     {COIN_ITEMS.module4.price} KaziCoins
                   </button>
                   <button onClick={() => goTo('profile', 'pack-agri_import')} className="btn-ghost px-2 text-xs">
-                    Pack Agri · 5 $
+                    {L('Pack Agri', 'Agri Pack')} · {usd(5)}
                   </button>
                 </div>
               </div>

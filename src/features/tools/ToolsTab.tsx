@@ -5,11 +5,12 @@ import type { ToolId } from '../../types';
 import CashJournal from './CashJournal';
 import ExchangeSimulator from './ExchangeSimulator';
 import PriceCalculator from './PriceCalculator';
+import { L } from '../../i18n';
 
 const TOOLS: { id: ToolId; label: string; icon: LucideIcon }[] = [
-  { id: 'pricing', label: 'Prix & Marge', icon: Calculator },
-  { id: 'exchange', label: 'Change', icon: ArrowLeftRight },
-  { id: 'journal', label: 'Journal', icon: BookOpen },
+  { id: 'pricing', label: L('Prix & Marge', 'Price & Margin'), icon: Calculator },
+  { id: 'exchange', label: L('Change', 'Exchange'), icon: ArrowLeftRight },
+  { id: 'journal', label: L('Journal', 'Cash book'), icon: BookOpen },
 ];
 
 export default function ToolsTab() {
@@ -17,8 +18,8 @@ export default function ToolsTab() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-extrabold">Outils du patron</h1>
-        <p className="text-sm text-muted">Gratuits, utilisables hors-ligne, pour ta vraie boutique.</p>
+        <h1 className="text-2xl font-extrabold">{L('Outils du patron', 'Boss tools')}</h1>
+        <p className="text-sm text-muted">{L('Gratuits, utilisables hors-ligne, pour ta vraie boutique.', 'Free, usable offline, for your real shop.')}</p>
       </div>
       <div className="grid grid-cols-3 gap-1 rounded-2xl bg-surface p-1">
         {TOOLS.map(({ id, label, icon: Icon }) => (

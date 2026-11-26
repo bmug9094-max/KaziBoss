@@ -5,26 +5,48 @@ import { getSector } from '../../config/sectors';
 import { isSoundOn, playSwipe } from '../../lib/sound';
 import { haptic } from '../../lib/ui';
 import type { ScenarioCard } from '../../types';
+import { L } from '../../i18n';
 
-const CATEGORY_LABEL: Record<ScenarioCard['category'], string> = {
-  stock: 'Stock',
-  change: 'Taux de change',
-  credit: 'Crédit',
-  energie: 'Énergie & imprévus',
-  fournisseur: 'Fournisseur',
-  marketing: 'Marketing local',
-  caisse: 'Caisse perso/pro',
-  famille: 'Famille & social',
-  admin: 'Administration',
-  'mobile-money': 'Mobile Money',
-  equipe: 'Équipe',
-  concurrence: 'Concurrence',
-  securite: 'Sécurité',
-  agri: 'Agri-business',
-  import: 'Import-export',
-  digital: 'Digital & réseaux',
-  transformation: 'Transformation',
-};
+const CATEGORY_LABEL: Record<ScenarioCard['category'], string> = L(
+  {
+    stock: 'Stock',
+    change: 'Taux de change',
+    credit: 'Crédit',
+    energie: 'Énergie & imprévus',
+    fournisseur: 'Fournisseur',
+    marketing: 'Marketing local',
+    caisse: 'Caisse perso/pro',
+    famille: 'Famille & social',
+    admin: 'Administration',
+    'mobile-money': 'Mobile Money',
+    equipe: 'Équipe',
+    concurrence: 'Concurrence',
+    securite: 'Sécurité',
+    agri: 'Agri-business',
+    import: 'Import-export',
+    digital: 'Digital & réseaux',
+    transformation: 'Transformation',
+  },
+  {
+    stock: 'Stock',
+    change: 'Exchange rate',
+    credit: 'Credit',
+    energie: 'Energy & surprises',
+    fournisseur: 'Supplier',
+    marketing: 'Local marketing',
+    caisse: 'Personal/business cash',
+    famille: 'Family & social',
+    admin: 'Paperwork',
+    'mobile-money': 'Mobile Money',
+    equipe: 'Team',
+    concurrence: 'Competition',
+    securite: 'Security',
+    agri: 'Agri-business',
+    import: 'Import-export',
+    digital: 'Digital & social media',
+    transformation: 'Processing',
+  },
+);
 
 const SWIPE_THRESHOLD = 110;
 
@@ -131,7 +153,7 @@ export default function ScenarioSwipe({
               <p className="mt-2 text-[15px] leading-relaxed text-ink/85 short:mt-1 short:text-sm short:leading-snug">{card.text}</p>
             </div>
             <p className="flex items-center justify-center gap-2 pt-3 text-[11px] font-semibold text-muted short:hidden">
-              <ArrowLeft size={12} /> Glisse la carte ou touche un choix <ArrowRight size={12} />
+              <ArrowLeft size={12} /> {L('Glisse la carte ou touche un choix', 'Swipe the card or tap a choice')} <ArrowRight size={12} />
             </p>
           </div>
         </motion.div>
@@ -160,10 +182,10 @@ export default function ScenarioSwipe({
               <span className={`text-[11px] font-extrabold uppercase tracking-wide ${on ? 'text-slate-900/70' : accent === 'gold' ? 'text-gold' : 'text-emerald'}`}>
                 {on ? (
                   <span className="inline-flex items-center gap-1">
-                    <Check size={12} /> Touche pour confirmer
+                    <Check size={12} /> {L('Touche pour confirmer', 'Tap to confirm')}
                   </span>
                 ) : (
-                  `Choix ${c.toUpperCase()}`
+                  `${L('Choix', 'Choice')} ${c.toUpperCase()}`
                 )}
               </span>
               <span className="leading-snug">{card[c].label}</span>

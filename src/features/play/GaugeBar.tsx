@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Package, Star, Wallet, Zap, type LucideIcon } from 'lucide-react';
 import { GAUGE_KEYS, GAUGE_META } from '../../lib/game';
 import type { Effects, Gauge, Gauges } from '../../types';
+import { usd } from '../../i18n';
 
 const ICONS: Record<Gauge, LucideIcon> = { cash: Wallet, stock: Package, reputation: Star, energy: Zap };
 const CASH_SCALE = 250;
@@ -57,13 +58,13 @@ export default function GaugeBar({ gauges, preview, delta }: { gauges: Gauges; p
                     className={`absolute right-1 top-1 rounded-full px-1.5 text-[10px] font-extrabold ${d > 0 ? 'bg-emerald text-slate-900' : 'bg-coral text-white'}`}
                   >
                     {d > 0 ? '+' : ''}
-                    {k === 'cash' ? `${Math.round(d)}$` : d}
+                    {k === 'cash' ? usd(Math.round(d)).replace(' ', '') : d}
                   </motion.span>
                 )}
               </AnimatePresence>
             </div>
             <span className={`text-[11px] font-bold ${danger ? 'text-coral' : 'text-muted'}`}>
-              {k === 'cash' ? `${Math.round(value)} $` : GAUGE_META[k].label}
+              {k === 'cash' ? usd(Math.round(value)) : GAUGE_META[k].label}
             </span>
           </div>
         );

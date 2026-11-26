@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { levelInfo } from '../../lib/progress';
 import { supabase, type LeaderboardRow } from '../../lib/supabase';
 import { usePlayer } from '../../state/PlayerContext';
+import { L, LOCALE } from '../../i18n';
 
 /** Classement fictif affiché en mode Démo locale */
 const DEMO: Omit<LeaderboardRow, 'level'>[] = [
@@ -39,7 +40,7 @@ export default function Leaderboard({ onSignup }: { onSignup: () => void }) {
 
   const demo = !user;
   const list: LeaderboardRow[] = demo
-    ? [...DEMO, { user_id: 'me', username: `${profile.username} (toi)`, city: profile.city, xp: profile.xp, streak: profile.streak }]
+    ? [...DEMO, { user_id: 'me', username: `${profile.username} ${L('(toi)', '(you)')}`, city: profile.city, xp: profile.xp, streak: profile.streak }]
         .sort((a, b) => b.xp - a.xp)
         .map((r) => ({ ...r, level: levelInfo(r.xp).level }))
     : (rows ?? []);
@@ -47,10 +48,10 @@ export default function Leaderboard({ onSignup }: { onSignup: () => void }) {
   return (
     <section className="card p-4">
       <h2 className="flex items-center gap-2 font-extrabold">
-        <Trophy size={18} className="text-gold" /> Classement {demo && <span className="chip text-muted">démo</span>}
+        <Trophy size={18} className="text-gold" /> {L('Classement', 'Leaderboard')} {demo && <span className="chip text-muted">{L('démo', 'demo')}</span>}
       </h2>
-      {error && <p className="mt-2 text-sm text-coral">Classement indisponible pour le moment.</p>}
-      {!demo && !rows && !error && <p className="mt-2 text-sm text-muted">Chargement…</p>}
+      {error && <p className="mt-2 text-sm text-coral">{L('Classement indisponible pour le moment.', 'Leaderboard unavailable right now.')}</p>}
+      {!demo && !rows && !error && <p className="mt-2 text-sm text-muted">{L('Chargement…', 'Loading…')}</p>}
       <ol className="mt-3 space-y-1.5">
         {list.slice(0, 10).map((r, i) => {
           const me = r.user_id === 'me' || r.user_id === user?.id;
@@ -60,17 +61,17 @@ export default function Leaderboard({ onSignup }: { onSignup: () => void }) {
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-bold">{r.username}</span>
                 <span className="block truncate text-[11px] text-muted">
-                  {r.city || '—'} · Niv. {r.level} · 🔥 {r.streak}
+                  {r.city || '—'} · {L('Niv.', 'Lvl')} {r.level} · 🔥 {r.streak}
                 </span>
               </span>
-              <span className="text-sm font-extrabold text-gold">{r.xp.toLocaleString('fr-FR')} XP</span>
+              <span className="text-sm font-extrabold text-gold">{r.xp.toLocaleString(LOCALE)} XP</span>
             </li>
           );
         })}
       </ol>
       {demo && (
         <button onClick={onSignup} className="btn-ghost mt-3 w-full text-xs">
-          Crée un compte pour apparaître dans le vrai classement
+          {L('Crée un compte pour apparaître dans le vrai classement', 'Create an account to appear on the real leaderboard')}
         </button>
       )}
     </section>

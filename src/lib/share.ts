@@ -5,6 +5,7 @@
  * Le lien porte le code de parrainage du joueur connecté : https://…/?ref=CODE
  */
 import { loadJSON, removeKey, saveJSON } from './storage';
+import { isEN } from '../i18n';
 
 const REF_KEY = 'ref';
 const REF_PATTERN = /^[a-z0-9]{6,12}$/;
@@ -16,6 +17,10 @@ export function shareUrl(refCode?: string | null): string {
 }
 
 export function inviteText(score?: number): string {
+  if (isEN)
+    return score
+      ? `I lasted 30 days with ${score} points on KaziBoss 👑 Can you beat that? Business simulation, quick lessons and management tools. Free, even offline.`
+      : 'I run my shop on KaziBoss 👑: 30 days to become the boss of your business. Quick lessons and real management tools. Free, even offline.';
   return score
     ? `J'ai tenu 30 jours avec ${score} points sur KaziBoss 👑 Tu fais mieux ? Simulation de business, leçons express et outils de gestion. Gratuit, même hors-ligne.`
     : "Je gère ma boutique sur KaziBoss 👑 : 30 jours pour devenir le boss de ton business. Leçons express et vrais outils de gestion. Gratuit, même hors-ligne.";

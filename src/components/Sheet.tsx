@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
+import { L } from '../i18n';
 
 /** Panneau plein écran / bottom-sheet animé. */
 export default function Sheet({
@@ -45,7 +46,7 @@ export default function Sheet({
           >
             <div className="pt-safe flex items-center justify-between px-5 pb-2 pt-4">
               <h2 className="text-lg font-extrabold">{title}</h2>
-              <button onClick={onClose} className="rounded-full bg-surface-2 p-2 text-muted hover:text-ink" aria-label="Fermer">
+              <button onClick={onClose} className="rounded-full bg-surface-2 p-2 text-muted hover:text-ink" aria-label={L('Fermer', 'Close')}>
                 <X size={18} />
               </button>
             </div>

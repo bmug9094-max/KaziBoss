@@ -1,3 +1,5 @@
+import { LOCALE, isEN } from '../../i18n';
+
 /** Utilitaires partagés par les outils */
 export const num = (s: string) => {
   const v = parseFloat(s.replace(/\s/g, '').replace(',', '.'));
@@ -6,8 +8,10 @@ export const num = (s: string) => {
 
 export function fmt(v: number, currency: string, decimals?: number) {
   const d = decimals ?? (currency === '$' ? 2 : 0);
-  const s = v.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
-  return currency === '$' ? `${s} $` : `${s} ${currency}`;
+  const s = Math.abs(v).toLocaleString(LOCALE, { minimumFractionDigits: d, maximumFractionDigits: d });
+  const sign = v < 0 ? '-' : '';
+  if (currency === '$') return isEN ? `${sign}$${s}` : `${sign}${s} $`;
+  return `${sign}${s} ${currency}`;
 }
 
 export function Field({

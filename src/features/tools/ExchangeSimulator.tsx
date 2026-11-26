@@ -3,12 +3,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { loadJSON, saveJSON } from '../../lib/storage';
 import { usePlayer } from '../../state/PlayerContext';
 import { Field, ResultRow, fmt, num } from './ui';
+import { L } from '../../i18n';
 
 /** Taux indicatifs : l'utilisateur saisit le taux du jour. */
 const CURRENCIES = [
-  { code: 'FC', name: 'Franc congolais (CDF)', rate: '2850' },
-  { code: 'FCFA', name: 'Franc CFA (XAF / XOF)', rate: '565' },
-  { code: 'GNF', name: 'Franc guinéen (GNF)', rate: '8650' },
+  { code: 'FC', name: L('Franc congolais (CDF)', 'Congolese franc (CDF)'), rate: '2850' },
+  { code: 'FCFA', name: L('Franc CFA (XAF / XOF)', 'CFA franc (XAF / XOF)'), rate: '565' },
+  { code: 'GNF', name: L('Franc guinéen (GNF)', 'Guinean franc (GNF)'), rate: '8650' },
 ] as const;
 
 interface ExchangeForm {
@@ -64,10 +65,10 @@ export default function ExchangeSimulator() {
     <div className="flex flex-col gap-4">
       <div className="card space-y-4 p-5">
         <h2 className="flex items-center gap-2 font-extrabold">
-          <ArrowDownUp size={18} className="text-gold" /> Convertisseur
+          <ArrowDownUp size={18} className="text-gold" /> {L('Convertisseur', 'Converter')}
         </h2>
         <label className="block">
-          <span className="label">Monnaie locale</span>
+          <span className="label">{L('Monnaie locale', 'Local currency')}</span>
           <select value={cur} onChange={(e) => onCurrency(e.target.value as ExchangeForm['currency'])} className="input">
             {CURRENCIES.map((c) => (
               <option key={c.code} value={c.code}>
@@ -76,14 +77,20 @@ export default function ExchangeSimulator() {
             ))}
           </select>
         </label>
-        <Field label="Taux du jour : 1 $ =" value={f.rate} onChange={set('rate')} suffix={cur} hint="Taux indicatif : saisis celui de ton cambiste aujourd'hui." />
+        <Field
+          label={L('Taux du jour : 1 $ =', "Today's rate: $1 =")}
+          value={f.rate}
+          onChange={set('rate')}
+          suffix={cur}
+          hint={L("Taux indicatif : saisis celui de ton cambiste aujourd'hui.", "Indicative rate: enter your money changer's rate for today.")}
+        />
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Field label="Prix en dollars" value={f.usd} onChange={set('usd')} suffix="$" />
+            <Field label={L('Prix en dollars', 'Price in dollars')} value={f.usd} onChange={set('usd')} suffix="$" />
             <p className="mt-1.5 text-sm font-extrabold text-gold">= {fmt(localFromUsd, cur)}</p>
           </div>
           <div>
-            <Field label={`Prix en ${cur}`} value={f.local} onChange={set('local')} suffix={cur} />
+            <Field label={`${L('Prix en', 'Price in')} ${cur}`} value={f.local} onChange={set('local')} suffix={cur} />
             <p className="mt-1.5 text-sm font-extrabold text-emerald">= {fmt(usdFromLocal, '$')}</p>
           </div>
         </div>
@@ -91,29 +98,31 @@ export default function ExchangeSimulator() {
 
       <div className="card space-y-4 p-5">
         <h2 className="flex items-center gap-2 font-extrabold">
-          <ShieldCheck size={18} className="text-emerald" /> Protection contre l'inflation
+          <ShieldCheck size={18} className="text-emerald" /> {L("Protection contre l'inflation", 'Inflation protection')}
         </h2>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Coût d'achat unitaire" value={f.cost} onChange={set('cost')} suffix="$" />
-          <Field label="Marge visée" value={f.margin} onChange={set('margin')} suffix="%" />
-          <Field label="Dépréciation / mois" value={f.depreciation} onChange={set('depreciation')} suffix="%" hint="Perte de valeur attendue de la monnaie" />
-          <Field label="Délai de réachat" value={f.days} onChange={set('days')} suffix="j" hint="Temps avant de racheter le stock" />
+          <Field label={L("Coût d'achat unitaire", 'Unit purchase cost')} value={f.cost} onChange={set('cost')} suffix="$" />
+          <Field label={L('Marge visée', 'Target margin')} value={f.margin} onChange={set('margin')} suffix="%" />
+          <Field label={L('Dépréciation / mois', 'Depreciation / month')} value={f.depreciation} onChange={set('depreciation')} suffix="%" hint={L('Perte de valeur attendue de la monnaie', "Expected loss of the currency's value")} />
+          <Field label={L('Délai de réachat', 'Time to restock')} value={f.days} onChange={set('days')} suffix={L('j', 'd')} hint={L('Temps avant de racheter le stock', 'Time before you buy stock again')} />
         </div>
         {protection && (
           <div className="rounded-2xl bg-surface-2/50 p-4">
-            <ResultRow label="Taux estimé au réachat" value={`${fmt(protection.projectedRate, cur)} / $`} />
-            <ResultRow label="Prix au taux du jour" value={fmt(protection.priceToday, cur)} />
-            <ResultRow label="Prix protégé conseillé" value={fmt(protection.priceProtected, cur)} strong tone="gold" />
+            <ResultRow label={L('Taux estimé au réachat', 'Estimated rate at restock')} value={`${fmt(protection.projectedRate, cur)} / $`} />
+            <ResultRow label={L('Prix au taux du jour', "Price at today's rate")} value={fmt(protection.priceToday, cur)} />
+            <ResultRow label={L('Prix protégé conseillé', 'Recommended protected price')} value={fmt(protection.priceProtected, cur)} strong tone="gold" />
             <div className="my-2 h-px bg-line" />
             <ResultRow
-              label="Marge réelle si tu ne bouges pas"
+              label={L('Marge réelle si tu ne bouges pas', "Real margin if you don't adjust")}
               value={`${(protection.marginLeft * 100).toFixed(1)} %`}
               tone={protection.marginLeft < 0.1 ? 'coral' : 'emerald'}
             />
             <p className="mt-2 flex gap-2 text-xs text-muted">
               <TrendingDown size={14} className="mt-0.5 shrink-0 text-coral" />
-              Sur 100 $ de recette gardée en {cur} pendant {num(f.days)} jours, tu perds environ {protection.valueLostPer100.toFixed(1)} $ de pouvoir d'achat.
-              Convertis la part destinée au réachat de stock.
+              {L(
+                `Sur 100 $ de recette gardée en ${cur} pendant ${num(f.days)} jours, tu perds environ ${protection.valueLostPer100.toFixed(1)} $ de pouvoir d'achat. Convertis la part destinée au réachat de stock.`,
+                `On $100 of takings kept in ${cur} for ${num(f.days)} days, you lose about $${protection.valueLostPer100.toFixed(1)} of buying power. Convert the share meant for restocking.`,
+              )}
             </p>
           </div>
         )}
