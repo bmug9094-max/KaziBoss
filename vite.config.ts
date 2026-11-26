@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  // NEXT_PUBLIC_* : variables publiques posées par l'intégration Vercel ↔ Supabase (URL + clé anon).
+  // Ne JAMAIS nommer un secret avec ces préfixes : il serait inclus dans le code envoyé aux navigateurs.
+  envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
   build: {
     rollupOptions: {
       output: {
@@ -19,7 +22,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.svg', 'icons/icon.svg', 'icons/icon-maskable.svg'],
+      includeAssets: ['favicon.svg', 'icons/*.svg', 'icons/*.png', 'legal/*'],
       manifest: {
         id: '/',
         name: 'KaziBoss',
@@ -35,10 +38,12 @@ export default defineConfig({
         background_color: '#0F172A',
         theme_color: '#0F172A',
         categories: ['education', 'finance', 'games', 'business'],
+        // PNG requis par Android (installation, Play Store via TWA) ; SVG en complément.
         icons: [
+          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
           { src: 'icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-          { src: 'icons/icon.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any' },
-          { src: 'icons/icon-maskable.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'maskable' },
         ],
         shortcuts: [
           { name: 'Jouer', short_name: 'Jouer', url: '/?tab=play' },
@@ -49,6 +54,8 @@ export default defineConfig({
         // Précache de tout le shell applicatif : l'app fonctionne entièrement hors-ligne.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,webmanifest}'],
         navigateFallback: '/index.html',
+        // Les pages légales sont de vraies pages HTML : ne pas les remplacer par l'app.
+        navigateFallbackDenylist: [/^\/legal\//],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         runtimeCaching: [

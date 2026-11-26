@@ -19,6 +19,12 @@ export const COIN_ITEMS = {
 
 export const ENERGY_REFILL_AMOUNT = 30;
 
+/** BONUS DE PARTAGE ET DE PARRAINAGE */
+export const SHARE_DAILY_BONUS = 10; // KaziCoins, une fois par jour quand on partage le jeu
+export const REFERRAL_BONUS = 100; // pour le parrain (attribué par le serveur, voir schema.sql § 7)
+export const REFEREE_BONUS = 50; // pour l'ami invité
+export const REFERRAL_XP_THRESHOLD = 150; // XP que l'ami doit atteindre pour débloquer les bonus
+
 export interface PremiumPack {
   id: PackId;
   name: string;
@@ -36,8 +42,13 @@ export const PREMIUM_PACKS: PremiumPack[] = [
     id: 'agri_import',
     name: 'Pack Agri-Business & Import-Export',
     tagline: 'Remonte la chaîne de valeur, de la récolte au conteneur.',
-    perks: ['6 scénarios exclusifs (récolte, conteneur, douane…)', 'Module 4 « Croissance & Équipe » inclus', 'Badge Exportateur'],
-    price: '4,99 $',
+    perks: [
+      '6 scénarios exclusifs (récolte, conteneur, douane…)',
+      'Secteur « Agri-Business & Transformation » débloqué tout de suite',
+      'Module 4 « Croissance & Équipe » inclus',
+      'Badge Exportateur',
+    ],
+    price: '5 $',
     emoji: '🚢',
     url: import.meta.env.VITE_CHARIOW_AGRI_URL ?? '',
   },
@@ -45,8 +56,8 @@ export const PREMIUM_PACKS: PremiumPack[] = [
     id: 'unlimited_lives',
     name: 'Pack Vies Illimitées',
     tagline: 'Rejoue sans limite, apprends de chaque faillite.',
-    perks: ['Secondes chances illimitées et gratuites', 'Aucune attente entre les parties'],
-    price: '2,99 $',
+    perks: ['Secondes chances illimitées et gratuites', 'Plusieurs secondes chances dans le même mois'],
+    price: '3 $',
     emoji: '❤️‍🔥',
     url: import.meta.env.VITE_CHARIOW_UNLIMITED_URL ?? '',
   },
@@ -55,7 +66,7 @@ export const PREMIUM_PACKS: PremiumPack[] = [
     name: 'Ressources Réelles — Digital Growth',
     tagline: 'Les modèles Excel automatisés pour ta vraie boutique.',
     perks: ['Journal de caisse automatisé', 'Calculateur de marge & stock', 'Tableau de bord mensuel'],
-    price: '9,99 $',
+    price: '10 $',
     emoji: '📊',
     url: import.meta.env.VITE_CHARIOW_RESOURCES_URL ?? '',
     external: true,

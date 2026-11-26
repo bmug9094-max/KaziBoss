@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { Crown, GraduationCap, HeartPulse, RotateCcw, Skull, TrendingDown } from 'lucide-react';
+import { Crown, GraduationCap, HeartPulse, RotateCcw, Share2, Skull, TrendingDown } from 'lucide-react';
+import { SHARE_DAILY_BONUS } from '../../config/shop';
 import { FAILURE_ANALYSIS, GAUGE_META, SECOND_CHANCE_COST, computeScore, costliestDecisions, type RunState } from '../../lib/game';
 
 interface Props {
@@ -8,9 +9,11 @@ interface Props {
   coins: number;
   onReplay: () => void;
   onSecondChance: () => void;
+  onShare: (score: number) => void;
+  shareBonusAvailable: boolean;
 }
 
-export default function EndScreen({ run, unlimitedLives, coins, onReplay, onSecondChance }: Props) {
+export default function EndScreen({ run, unlimitedLives, coins, onReplay, onSecondChance, onShare, shareBonusAvailable }: Props) {
   const score = computeScore(run);
   const victory = run.status === 'victory';
 
@@ -34,6 +37,9 @@ export default function EndScreen({ run, unlimitedLives, coins, onReplay, onSeco
             Bonus de fin de mois : <b className="text-gold">+100 XP · +50 KaziCoins</b>
           </p>
         </div>
+        <button onClick={() => onShare(score)} className="btn-emerald">
+          <Share2 size={18} /> Défier mes amis{shareBonusAvailable ? ` · +${SHARE_DAILY_BONUS} KaziCoins` : ''}
+        </button>
         <button onClick={onReplay} className="btn-primary">
           <RotateCcw size={18} /> Nouveau mois
         </button>

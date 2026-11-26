@@ -18,7 +18,9 @@ export type CardCategory =
   | 'concurrence'
   | 'securite'
   | 'agri'
-  | 'import';
+  | 'import'
+  | 'digital'
+  | 'transformation';
 
 export interface Choice {
   /** Texte du bouton */
@@ -33,6 +35,9 @@ export interface Choice {
 
 export type PackId = 'agri_import' | 'unlimited_lives' | 'digital_growth';
 
+/** Secteurs d'activité déblocables (voir src/config/sectors.ts) */
+export type SectorId = 'commerce' | 'services' | 'agri';
+
 export interface ScenarioCard {
   id: string;
   category: CardCategory;
@@ -45,6 +50,8 @@ export interface ScenarioCard {
   b: Choice;
   /** Carte réservée à un pack premium */
   pack?: PackId;
+  /** Carte propre à un secteur : tirée seulement si le joueur a choisi ce secteur pour le mois */
+  sector?: SectorId;
 }
 
 // ---------- Apprentissage ----------
@@ -122,4 +129,8 @@ export interface PlayerProfile {
   toolsUsed: ToolId[];
   stats: PlayerStats;
   theme: 'dark' | 'light';
+  /** YYYY-MM-DD du dernier bonus de partage (1 par jour) */
+  lastShareDate: string | null;
+  /** Nombre total de partages (badge Ambassadeur) */
+  shares: number;
 }

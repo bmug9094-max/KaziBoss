@@ -7,3 +7,6 @@ dev-dist
 !.env.example
 .DS_Store
 *.log
+
+# Cache local de la CLI Supabase
+supabase/.temp/

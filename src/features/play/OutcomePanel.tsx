@@ -10,7 +10,12 @@ export default function OutcomePanel({ run, onContinue }: { run: RunState; onCon
   const failing = res.failed.length > 0;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
+      className="flex flex-col gap-3"
+    >
       <div className="card p-5">
         <p className="text-xs font-bold uppercase tracking-wide text-muted">
           Jour {run.day} · Tu as choisi {res.choice.toUpperCase()}
@@ -59,7 +64,7 @@ export default function OutcomePanel({ run, onContinue }: { run: RunState; onCon
       <motion.div
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.15 }}
+        transition={{ delay: 0.06, duration: 0.18 }}
         className="rounded-3xl border border-gold/40 bg-gold/10 p-5"
       >
         <p className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-gold">

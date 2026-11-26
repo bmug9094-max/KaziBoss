@@ -1,5 +1,5 @@
 import { SCENARIO_CARDS } from '../data/gameContent';
-import type { CardCategory, Effects, Gauge, Gauges, PackId, ScenarioCard } from '../types';
+import type { CardCategory, Effects, Gauge, Gauges, PackId, ScenarioCard, SectorId } from '../types';
 
 export const MAX_DAYS = 30;
 export const START_GAUGES: Gauges = { cash: 100, stock: 50, reputation: 50, energy: 80 };
@@ -46,6 +46,8 @@ export interface RunState {
   secondChancesUsed: number;
   lastResult: TurnResult | null;
   failed: Gauge[];
+  /** Secteur choisi pour ce mois (null = boutique de quartier). Absent des sauvegardes anciennes. */
+  sector?: SectorId | null;
 }
 
 export const NEW_RUN: RunState = {
@@ -60,7 +62,16 @@ export const NEW_RUN: RunState = {
   secondChancesUsed: 0,
   lastResult: null,
   failed: [],
+  sector: null,
 };
+
+/** Seuil d'alerte : jauge sous 20 % (pour la trésorerie : sous 20 $, soit 20 % du capital de départ). */
+export const LOW_GAUGE_THRESHOLD = 20;
+
+/** Jauges qui viennent de passer sous le seuil d'alerte (sans être tombées à zéro). */
+export function newlyLowGauges(before: Gauges, after: Gauges): Gauge[] {
+  return GAUGE_KEYS.filter((k) => before[k] >= LOW_GAUGE_THRESHOLD && after[k] < LOW_GAUGE_THRESHOLD && after[k] > 0);
+}
 
 const CARD_INDEX = new Map(SCENARIO_CARDS.map((c) => [c.id, c]));
 export const getCard = (id: string | null): ScenarioCard | undefined => (id ? CARD_INDEX.get(id) : undefined);
@@ -81,18 +92,19 @@ export function failedGauges(g: Gauges): Gauge[] {
 }
 
 /** Tirage pondéré : quand une jauge est basse, les cartes qui la concernent remontent. */
-export function drawCard(seen: string[], gauges: Gauges, packs: PackId[]): ScenarioCard {
-  const available = SCENARIO_CARDS.filter((c) => !c.pack || packs.includes(c.pack));
+export function drawCard(seen: string[], gauges: Gauges, packs: PackId[], sector: SectorId | null = null): ScenarioCard {
+  const available = SCENARIO_CARDS.filter((c) => (!c.pack || packs.includes(c.pack)) && (!c.sector || c.sector === sector));
   let pool = available.filter((c) => !seen.includes(c.id));
   if (pool.length === 0) pool = available;
 
   const boost = new Set<CardCategory>();
-  if (gauges.stock < 40) ['stock', 'fournisseur', 'agri', 'import'].forEach((c) => boost.add(c as CardCategory));
-  if (gauges.energy < 35) ['energie', 'equipe'].forEach((c) => boost.add(c as CardCategory));
-  if (gauges.reputation < 30) ['marketing', 'concurrence'].forEach((c) => boost.add(c as CardCategory));
-  if (gauges.cash < 30) ['credit', 'caisse'].forEach((c) => boost.add(c as CardCategory));
+  if (gauges.stock < 40) (['stock', 'fournisseur', 'agri', 'import', 'transformation'] as const).forEach((c) => boost.add(c));
+  if (gauges.energy < 35) (['energie', 'equipe'] as const).forEach((c) => boost.add(c));
+  if (gauges.reputation < 30) (['marketing', 'concurrence', 'digital'] as const).forEach((c) => boost.add(c));
+  if (gauges.cash < 30) (['credit', 'caisse'] as const).forEach((c) => boost.add(c));
 
-  const weights = pool.map((c) => (boost.has(c.category) ? 3 : 1) * (c.pack ? 1.5 : 1));
+  // Les cartes du secteur choisi sortent plus souvent : c'est la « couleur » du mois.
+  const weights = pool.map((c) => (boost.has(c.category) ? 3 : 1) * (c.pack ? 1.5 : 1) * (c.sector ? 2 : 1));
   const total = weights.reduce((a, b) => a + b, 0);
   let r = Math.random() * total;
   for (let i = 0; i < pool.length; i++) {
@@ -102,9 +114,9 @@ export function drawCard(seen: string[], gauges: Gauges, packs: PackId[]): Scena
   return pool[pool.length - 1];
 }
 
-export function startRun(packs: PackId[]): RunState {
-  const card = drawCard([], START_GAUGES, packs);
-  return { ...NEW_RUN, status: 'playing', gauges: { ...START_GAUGES }, cardId: card.id, seen: [card.id] };
+export function startRun(packs: PackId[], sector: SectorId | null = null): RunState {
+  const card = drawCard([], START_GAUGES, packs, sector);
+  return { ...NEW_RUN, status: 'playing', gauges: { ...START_GAUGES }, cardId: card.id, seen: [card.id], sector };
 }
 
 /** Applique un choix puis la journée de vente. */
@@ -148,7 +160,7 @@ export function resolveChoice(run: RunState, choice: 'a' | 'b'): RunState {
 export function advance(run: RunState, packs: PackId[]): RunState {
   if (run.failed.length) return { ...run, status: 'gameover' };
   if (run.day >= MAX_DAYS) return { ...run, status: 'victory' };
-  const card = drawCard(run.seen, run.gauges, packs);
+  const card = drawCard(run.seen, run.gauges, packs, run.sector ?? null);
   return { ...run, status: 'playing', day: run.day + 1, cardId: card.id, seen: [...run.seen, card.id], lastResult: null };
 }
 

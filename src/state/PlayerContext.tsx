@@ -1,7 +1,9 @@
 import type { User } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { newlyEarnedBadges, touchStreak } from '../lib/progress';
-import { loadJSON, removeKey, saveJSON } from '../lib/storage';
+import { SHARE_DAILY_BONUS } from '../config/shop';
+import { clearReferral, inviteText, pendingReferral, shareGame, shareUrl } from '../lib/share';
+import { loadJSON, removeKey, saveJSON, todayISO } from '../lib/storage';
 import { isSupabaseConfigured, supabase, type ProfileRow } from '../lib/supabase';
 import type { PackId, PlayerProfile, PlayerStats, ToolId } from '../types';
 
@@ -34,6 +36,8 @@ export const DEFAULT_PROFILE: PlayerProfile = {
   toolsUsed: [],
   stats: DEFAULT_STATS,
   theme: 'dark',
+  lastShareDate: null,
+  shares: 0,
 };
 
 const STORAGE_KEY = 'profile';
@@ -48,6 +52,16 @@ export interface Toast {
 interface AuthResult {
   error?: string;
   info?: string;
+}
+
+/** Données acheteur exigées par le checkout Chariow */
+export interface CheckoutBuyer {
+  firstName: string;
+  lastName: string;
+  /** chiffres uniquement, sans indicatif */
+  phone: string;
+  /** ISO 3166-1 alpha-2 */
+  country: string;
 }
 
 interface PlayerContextValue {
@@ -68,6 +82,21 @@ interface PlayerContextValue {
   signIn: (email: string, password: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
   resetProgress: () => void;
+  /** Envoie l'email « mot de passe oublié » */
+  requestPasswordReset: (email: string) => Promise<AuthResult>;
+  /** true quand le joueur revient du lien de réinitialisation reçu par email */
+  passwordRecovery: boolean;
+  updatePassword: (password: string) => Promise<AuthResult>;
+  /** Relit les packs et récupère les achats faits avec l'email du compte */
+  restorePurchases: (silent?: boolean) => Promise<void>;
+  /** Ouvre le paiement Chariow d'un pack pour le joueur connecté */
+  checkout: (pack: PackId, buyer: CheckoutBuyer) => Promise<AuthResult>;
+  deleteAccount: () => Promise<AuthResult>;
+  /** Code de parrainage du joueur connecté (null en invité) */
+  refCode: string | null;
+  /** Partage le jeu (avec le lien de parrainage) et donne le bonus du jour */
+  shareInvite: (score?: number) => Promise<void>;
+  referralStats: () => Promise<{ invited: number; rewarded: number } | null>;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -89,8 +118,12 @@ function progressOf(p: PlayerProfile) {
     badges: p.badges,
     toolsUsed: p.toolsUsed,
     stats: p.stats,
+    lastShareDate: p.lastShareDate,
+    shares: p.shares,
   };
 }
+
+const laterDate = (a: string | null | undefined, b: string | null | undefined) => ((a ?? '') > (b ?? '') ? (a ?? null) : (b ?? null));
 
 function mergeFromRow(local: PlayerProfile, row: ProfileRow): PlayerProfile {
   const remote = (row.progress ?? {}) as Partial<PlayerProfile>;
@@ -121,6 +154,8 @@ function mergeFromRow(local: PlayerProfile, row: ProfileRow): PlayerProfile {
     badges: union(local.badges, remote.badges ?? []),
     toolsUsed: union(local.toolsUsed, remote.toolsUsed ?? []),
     stats,
+    lastShareDate: laterDate(local.lastShareDate, remote.lastShareDate),
+    shares: Math.max(local.shares, remote.shares ?? 0),
   };
 }
 
@@ -128,6 +163,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<PlayerProfile>(() => hydrate(loadJSON(STORAGE_KEY, {})));
   const [user, setUser] = useState<User | null>(null);
   const [synced, setSynced] = useState(false);
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const [refCode, setRefCode] = useState<string | null>(null);
+  const syncedRef = useRef(false);
+  syncedRef.current = synced;
+  const profileRef = useRef(profile);
+  profileRef.current = profile;
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
 
@@ -160,9 +201,39 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!supabase) return;
     supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      // On ne remplace l'objet que si le compte change (évite une resynchro à chaque rafraîchissement de jeton).
+      setUser((prev) => (prev?.id === session?.user?.id ? prev : (session?.user ?? null)));
+      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true);
+    });
     return () => data.subscription.unsubscribe();
   }, []);
+
+  const restorePurchases = useCallback(
+    async (silent = false) => {
+      if (!supabase) return;
+      const before = profileRef.current.unlockedPacks.length;
+      const { data, error } = await supabase.rpc('claim_pending_purchases');
+      if (error) {
+        if (!silent) notify('Impossible de vérifier tes achats pour le moment.', 'error');
+        return;
+      }
+      const packs = (Array.isArray(data) ? data : []) as PackId[];
+      setProfile((p) => ({ ...p, unlockedPacks: packs }));
+      if (packs.length > before) notify('🎉 Achat retrouvé : ton pack est débloqué !', 'gold');
+      else if (!silent) notify(packs.length ? 'Tes packs sont à jour.' : 'Aucun achat trouvé pour cet email.', 'info');
+    },
+    [notify],
+  );
+
+  const claimCoinGrants = useCallback(async () => {
+    if (!supabase) return;
+    const { data, error } = await supabase.rpc('claim_coin_grants');
+    const amount = typeof data === 'number' ? data : 0;
+    if (error || amount <= 0) return;
+    setProfile((p) => ({ ...p, kazicoins: p.kazicoins + amount }));
+    notify(`🤝 Bonus de parrainage : +${amount} KaziCoins !`, 'gold');
+  }, [notify]);
 
   const fetchRemote = useCallback(async (u: User) => {
     if (!supabase) return;
@@ -171,9 +242,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       notify('Synchronisation impossible pour le moment.', 'error');
       return;
     }
-    if (data) setProfile((p) => mergeFromRow(p, data as ProfileRow));
+    if (data) {
+      setProfile((p) => mergeFromRow(p, data as ProfileRow));
+      setRefCode((data as ProfileRow).ref_code ?? null);
+    }
     setSynced(true);
-  }, [notify]);
+    // Achats payés avant la création du compte (ou avec un simple lien de paiement).
+    void restorePurchases(true);
+    // KaziCoins offerts par le serveur (parrainage) : appliqués APRÈS la fusion ci-dessus.
+    void claimCoinGrants();
+  }, [notify, restorePurchases, claimCoinGrants]);
 
   useEffect(() => {
     setSynced(false);
@@ -187,10 +265,40 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       if (document.visibilityState !== 'visible' || !supabase) return;
       const { data } = await supabase.from('profiles').select('unlocked_packs').eq('id', user.id).maybeSingle();
       if (data) setProfile((p) => ({ ...p, unlockedPacks: (data.unlocked_packs ?? []) as PackId[] }));
+      // Seulement après la première fusion : sinon le solde serveur écraserait le bonus.
+      if (syncedRef.current) void claimCoinGrants();
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
-  }, [user]);
+  }, [user, claimCoinGrants]);
+
+  // Retour de Chariow (?purchase=<pack>) : le webhook peut arriver quelques secondes après
+  // la redirection, on vérifie donc le compte pendant ~40 s.
+  useEffect(() => {
+    if (!supabase || !user) return;
+    const params = new URLSearchParams(window.location.search);
+    const pack = params.get('purchase') as PackId | null;
+    if (!pack) return;
+    params.delete('purchase');
+    const qs = params.toString();
+    window.history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : ''));
+    notify('⏳ Paiement reçu, activation de ton pack…', 'info');
+    let tries = 0;
+    const timer = setInterval(async () => {
+      tries++;
+      const { data } = await supabase!.from('profiles').select('unlocked_packs').eq('id', user.id).maybeSingle();
+      const packs = (data?.unlocked_packs ?? []) as PackId[];
+      if (packs.includes(pack)) {
+        clearInterval(timer);
+        setProfile((p) => ({ ...p, unlockedPacks: packs }));
+        notify('🎉 Pack activé, merci pour ton soutien !', 'gold');
+      } else if (tries >= 13) {
+        clearInterval(timer);
+        notify("L'activation prend plus de temps que prévu. Utilise « Restaurer mes achats » dans quelques minutes.", 'info');
+      }
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [user, notify]);
 
   // Envoi différé de la progression (les packs ne sont jamais écrits par le client).
   useEffect(() => {
@@ -221,9 +329,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const profileRef = useRef(profile);
-  profileRef.current = profile;
-
   const spendCoins = useCallback(
     (amount: number) => {
       if (profileRef.current.kazicoins < amount) {
@@ -253,8 +358,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(async (email: string, password: string, username: string, city: string): Promise<AuthResult> => {
     if (!supabase) return { error: 'Supabase non configuré.' };
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { username, city } } });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      // `ref` : code de parrainage du lien d'invitation, lu par handle_new_user (schema.sql § 7).
+      options: { data: { username, city, ref: pendingReferral() ?? undefined }, emailRedirectTo: window.location.origin },
+    });
     if (error) return { error: error.message };
+    clearReferral();
     setProfile((p) => ({ ...p, username, city }));
     if (!data.session) return { info: 'Compte créé ! Vérifie ta boîte mail pour confirmer ton adresse, puis connecte-toi.' };
     return {};
@@ -268,6 +379,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await supabase?.auth.signOut();
+    setRefCode(null);
     setProfile((p) => ({ ...p, unlockedPacks: [] }));
     notify('Déconnecté. Ta progression reste sur cet appareil.');
   }, [notify]);
@@ -278,6 +390,78 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setProfile((p) => ({ ...DEFAULT_PROFILE, theme: p.theme, username: p.username, city: p.city, unlockedPacks: p.unlockedPacks }));
     notify('Progression réinitialisée.');
   }, [notify]);
+
+  const requestPasswordReset = useCallback(async (email: string): Promise<AuthResult> => {
+    if (!supabase) return { error: 'Supabase non configuré.' };
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+    if (error) return { error: error.message };
+    return { info: 'Si un compte existe pour cet email, tu vas recevoir un lien pour choisir un nouveau mot de passe.' };
+  }, []);
+
+  const updatePassword = useCallback(
+    async (password: string): Promise<AuthResult> => {
+      if (!supabase) return { error: 'Supabase non configuré.' };
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) return { error: error.message };
+      setPasswordRecovery(false);
+      notify('🔐 Mot de passe mis à jour.', 'success');
+      return {};
+    },
+    [notify],
+  );
+
+  const checkout = useCallback(async (pack: PackId, buyer: CheckoutBuyer): Promise<AuthResult> => {
+    if (!supabase) return { error: 'Supabase non configuré.' };
+    const { data, error } = await supabase.functions.invoke<{ step?: string; url?: string | null; error?: string }>('create-checkout', {
+      body: { pack, buyer },
+    });
+    if (error || !data) return { error: 'Paiement indisponible pour le moment. Réessaie dans un instant.' };
+    if (data.step === 'already_purchased') {
+      await restorePurchases(true);
+      return { info: 'Tu as déjà acheté ce pack : il est restauré sur ton compte.' };
+    }
+    if (!data.url) return { error: data.error ?? 'Lien de paiement introuvable.' };
+    window.location.assign(data.url);
+    return {};
+  }, [restorePurchases]);
+
+  const deleteAccount = useCallback(async (): Promise<AuthResult> => {
+    if (!supabase) return { error: 'Supabase non configuré.' };
+    const { error } = await supabase.rpc('delete_my_account');
+    if (error) return { error: 'Suppression impossible pour le moment. Écris-nous et nous le ferons pour toi.' };
+    await supabase.auth.signOut();
+    removeKey('run');
+    removeKey('journal');
+    removeKey('sector');
+    setProfile((p) => ({ ...DEFAULT_PROFILE, theme: p.theme }));
+    notify('Ton compte et tes données ont été supprimés.');
+    return {};
+  }, [notify]);
+
+  const shareInvite = useCallback(
+    async (score?: number) => {
+      const outcome = await shareGame(inviteText(score), shareUrl(refCode));
+      if (outcome === 'cancelled') return;
+      const today = todayISO();
+      const bonus = profileRef.current.lastShareDate !== today;
+      setProfile((p) => ({
+        ...p,
+        shares: p.shares + 1,
+        lastShareDate: today,
+        kazicoins: bonus ? p.kazicoins + SHARE_DAILY_BONUS : p.kazicoins,
+      }));
+      if (bonus) notify(`📣 Merci pour le partage ! +${SHARE_DAILY_BONUS} KaziCoins`, 'gold');
+    },
+    [refCode, notify],
+  );
+
+  const referralStats = useCallback(async () => {
+    if (!supabase || !user) return null;
+    const { data, error } = await supabase.rpc('my_referral_stats');
+    if (error || !data) return null;
+    const d = data as { invited?: number; rewarded?: number };
+    return { invited: d.invited ?? 0, rewarded: d.rewarded ?? 0 };
+  }, [user]);
 
   const value = useMemo<PlayerContextValue>(
     () => ({
@@ -298,8 +482,42 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       signIn,
       signOut,
       resetProgress,
+      requestPasswordReset,
+      passwordRecovery,
+      updatePassword,
+      restorePurchases,
+      checkout,
+      deleteAccount,
+      refCode,
+      shareInvite,
+      referralStats,
     }),
-    [profile, user, update, reward, spendCoins, recordActivity, markToolUsed, hasPack, module4Unlocked, toasts, notify, signUp, signIn, signOut, resetProgress],
+    [
+      profile,
+      user,
+      update,
+      reward,
+      spendCoins,
+      recordActivity,
+      markToolUsed,
+      hasPack,
+      module4Unlocked,
+      toasts,
+      notify,
+      signUp,
+      signIn,
+      signOut,
+      resetProgress,
+      requestPasswordReset,
+      passwordRecovery,
+      updatePassword,
+      restorePurchases,
+      checkout,
+      deleteAccount,
+      refCode,
+      shareInvite,
+      referralStats,
+    ],
   );
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;

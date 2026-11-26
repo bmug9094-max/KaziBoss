@@ -1,6 +1,8 @@
 import { motion, useAnimationControls, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { getSector } from '../../config/sectors';
+import { playSwipe } from '../../lib/sound';
 import type { ScenarioCard } from '../../types';
 
 const CATEGORY_LABEL: Record<ScenarioCard['category'], string> = {
@@ -19,6 +21,8 @@ const CATEGORY_LABEL: Record<ScenarioCard['category'], string> = {
   securite: 'Sécurité',
   agri: 'Agri-business',
   import: 'Import-export',
+  digital: 'Digital & réseaux',
+  transformation: 'Transformation',
 };
 
 const SWIPE_THRESHOLD = 110;
@@ -46,14 +50,16 @@ export default function ScenarioSwipe({
 
   // Entrée de la carte
   useEffect(() => {
-    void controls.start({ scale: 1, opacity: 1, y: 0, transition: { type: 'spring', stiffness: 260, damping: 24 } });
+    // Ressort court : la carte est lisible en ~0,25 s (avant : ~0,6 s).
+    void controls.start({ scale: 1, opacity: 1, y: 0, transition: { type: 'spring', stiffness: 520, damping: 36, mass: 0.8 } });
   }, [controls]);
 
   const fly = async (c: 'a' | 'b') => {
     if (locked) return;
     setLocked(true);
     onPreview(c);
-    await controls.start({ x: c === 'a' ? -520 : 520, opacity: 0, transition: { duration: 0.28, ease: 'easeIn' } });
+    playSwipe();
+    await controls.start({ x: c === 'a' ? -520 : 520, opacity: 0, transition: { duration: 0.2, ease: 'easeIn' } });
     onChoose(c);
   };
 
@@ -89,7 +95,7 @@ export default function ScenarioSwipe({
           onDrag={onDrag}
           onDragEnd={onDragEnd}
           animate={controls}
-          initial={{ scale: 0.92, opacity: 0, y: 16 }}
+          initial={{ scale: 0.97, opacity: 0, y: 8 }}
           style={{ x, rotate }}
           className="card absolute inset-0 flex cursor-grab touch-pan-y flex-col overflow-hidden active:cursor-grabbing"
         >
@@ -109,6 +115,7 @@ export default function ScenarioSwipe({
               <span className="mt-1 inline-block rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gold">
                 {CATEGORY_LABEL[card.category]}
                 {card.pack ? ' · Premium' : ''}
+                {card.sector ? ` · ${getSector(card.sector)?.emoji ?? ''}` : ''}
               </span>
             </div>
           </div>

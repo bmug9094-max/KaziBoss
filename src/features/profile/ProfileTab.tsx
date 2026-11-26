@@ -1,16 +1,57 @@
-import { Check, Cloud, CloudOff, Coins, ExternalLink, Flame, LogOut, MapPin, Moon, RotateCcw, Sparkles, Sun, Trophy } from 'lucide-react';
+import {
+  Check,
+  Cloud,
+  CloudOff,
+  Coins,
+  ExternalLink,
+  FileText,
+  Flame,
+  Loader2,
+  LogOut,
+  MapPin,
+  Moon,
+  RefreshCw,
+  RotateCcw,
+  Shield,
+  Sparkles,
+  Sun,
+  Trash2,
+  Trophy,
+} from 'lucide-react';
 import { useState, type ReactNode } from 'react';
+import { LEGAL_LINKS } from '../../config/legal';
 import { COIN_ITEMS, PREMIUM_PACKS, buildCheckoutUrl, type PremiumPack } from '../../config/shop';
 import { BADGES, displayStreak, levelInfo } from '../../lib/progress';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { usePlayer } from '../../state/PlayerContext';
 import AuthSheet from './AuthSheet';
+import BuyerSheet, { type BuyerInfo } from './BuyerSheet';
+import InviteCard from './InviteCard';
 import Leaderboard from './Leaderboard';
 
 export default function ProfileTab() {
-  const { profile, update, spendCoins, notify, user, email, isCloud, signOut, resetProgress, hasPack, module4Unlocked } = usePlayer();
+  const {
+    profile,
+    update,
+    spendCoins,
+    notify,
+    user,
+    email,
+    isCloud,
+    signOut,
+    resetProgress,
+    hasPack,
+    module4Unlocked,
+    checkout,
+    restorePurchases,
+    deleteAccount,
+  } = usePlayer();
   const [authOpen, setAuthOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [paying, setPaying] = useState<PremiumPack['id'] | null>(null);
+  const [buying, setBuying] = useState<PremiumPack | null>(null);
+  const [restoring, setRestoring] = useState(false);
   const lvl = levelInfo(profile.xp);
   const streak = displayStreak(profile);
   const initials = profile.username.slice(0, 2).toUpperCase();
@@ -28,13 +69,51 @@ export default function ProfileTab() {
     notify('🚀 Module 4 débloqué !', 'gold');
   };
 
+  /** Un pack est achetable si le paiement serveur (Supabase) ou un lien Chariow direct est configuré. */
+  const canBuy = (pack: PremiumPack) => isSupabaseConfigured || Boolean(pack.url);
+
   const openPack = (pack: PremiumPack) => {
-    if (!pack.url) return notify('Lien de paiement non configuré (voir .env).', 'error');
+    // Ressources externes : livrées par Chariow, pas besoin de compte KaziBoss.
+    if (pack.external && !email) {
+      if (pack.url) window.open(pack.url, '_blank', 'noopener,noreferrer');
+      return;
+    }
     if (!email) {
       setAuthOpen(true);
       return notify('Crée un compte pour lier ton achat à ta progression.', 'info');
     }
-    window.open(buildCheckoutUrl(pack.url, email), '_blank', 'noopener,noreferrer');
+    if (isSupabaseConfigured) return setBuying(pack); // formulaire acheteur, puis checkout serveur
+    fallbackLink(pack, 'Paiement non configuré.');
+  };
+
+  /** Secours : lien Chariow direct. L'achat sera rattaché via l'email (« Restaurer mes achats »). */
+  const fallbackLink = (pack: PremiumPack, error: string) => {
+    if (pack.url && email) window.open(buildCheckoutUrl(pack.url, email), '_blank', 'noopener,noreferrer');
+    else notify(error, 'error');
+  };
+
+  const confirmPurchase = async (buyer: BuyerInfo) => {
+    if (!buying) return;
+    const pack = buying;
+    setPaying(pack.id);
+    const res = await checkout(pack.id, buyer);
+    setPaying(null);
+    if (!res.error && !res.info) return; // redirection vers Chariow en cours
+    setBuying(null);
+    if (res.info) notify(res.info, 'success');
+    else fallbackLink(pack, res.error!);
+  };
+
+  const restore = async () => {
+    setRestoring(true);
+    await restorePurchases();
+    setRestoring(false);
+  };
+
+  const removeAccount = async () => {
+    const res = await deleteAccount();
+    setConfirmDelete(false);
+    if (res.error) notify(res.error, 'error');
   };
 
   return (
@@ -176,13 +255,21 @@ export default function ProfileTab() {
                       <Check size={16} /> Débloqué
                     </p>
                   ) : (
-                    <button onClick={() => openPack(pack)} disabled={!pack.url} className={`${pack.external ? 'btn-emerald' : 'btn-primary'} w-full py-2.5`}>
-                      {pack.url ? (
+                    <button
+                      onClick={() => openPack(pack)}
+                      disabled={!canBuy(pack) || paying !== null}
+                      className={`${pack.external ? 'btn-emerald' : 'btn-primary'} w-full py-2.5`}
+                    >
+                      {paying === pack.id ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" /> Ouverture du paiement…
+                        </>
+                      ) : canBuy(pack) ? (
                         <>
                           {pack.external ? 'Obtenir les modèles' : 'Débloquer'} · {pack.price} <ExternalLink size={14} />
                         </>
                       ) : (
-                        'Lien Chariow à configurer'
+                        'Paiement bientôt disponible'
                       )}
                     </button>
                   )}
@@ -191,8 +278,17 @@ export default function ProfileTab() {
             );
           })}
         </div>
-        <p className="mt-2 px-1 text-[11px] text-muted">Paiement sécurisé sur Chariow. Ton pack est activé sur ton compte dès confirmation du paiement.</p>
+        <p className="mt-2 px-1 text-[11px] text-muted">
+          Paiement sécurisé sur Chariow (moyens de paiement proposés selon ton pays). Ton pack est activé sur ton compte dès confirmation du paiement.
+        </p>
+        {user && (
+          <button onClick={() => void restore()} disabled={restoring} className="btn-ghost mt-2 w-full py-2 text-xs">
+            {restoring ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} Restaurer mes achats
+          </button>
+        )}
       </section>
+
+      <InviteCard onSignup={() => setAuthOpen(true)} />
 
       <Leaderboard onSignup={() => setAuthOpen(true)} />
 
@@ -222,9 +318,45 @@ export default function ProfileTab() {
             <RotateCcw size={16} /> Réinitialiser ma progression
           </button>
         )}
+        {user &&
+          (confirmDelete ? (
+            <div className="space-y-2 rounded-2xl bg-coral/10 p-3">
+              <p className="text-xs text-ink/85">
+                Ton compte, ta progression en ligne et ta place au classement seront supprimés définitivement. Les packs achetés seront perdus.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => void removeAccount()} className="btn bg-coral text-white">
+                  Supprimer
+                </button>
+                <button onClick={() => setConfirmDelete(false)} className="btn-ghost">
+                  Annuler
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setConfirmDelete(true)} className="btn-ghost w-full justify-start text-coral">
+              <Trash2 size={16} /> Supprimer mon compte
+            </button>
+          ))}
+        <div className="flex gap-2 pt-1">
+          <a href={LEGAL_LINKS.terms} target="_blank" rel="noopener" className="btn-ghost flex-1 py-2 text-xs">
+            <FileText size={14} /> CGU / CGV
+          </a>
+          <a href={LEGAL_LINKS.privacy} target="_blank" rel="noopener" className="btn-ghost flex-1 py-2 text-xs">
+            <Shield size={14} /> Confidentialité
+          </a>
+        </div>
       </section>
 
       <AuthSheet open={authOpen} onClose={() => setAuthOpen(false)} />
+      <BuyerSheet
+        key={buying?.id ?? 'none'}
+        open={buying !== null}
+        packName={buying?.name ?? ''}
+        price={buying?.price ?? ''}
+        onClose={() => setBuying(null)}
+        onConfirm={confirmPurchase}
+      />
     </div>
   );
 }

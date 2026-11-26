@@ -1,8 +1,15 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { PackId } from '../types';
 
-const url = import.meta.env.VITE_SUPABASE_URL?.trim();
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+const env = import.meta.env;
+// VITE_* en local (.env) ; NEXT_PUBLIC_* sur Vercel (variables créées par l'intégration Supabase).
+const url = (env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL)?.trim();
+const anonKey = (
+  env.VITE_SUPABASE_ANON_KEY ||
+  env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+)?.trim();
 
 export const isSupabaseConfigured = Boolean(url && anonKey);
 
@@ -24,6 +31,8 @@ export interface ProfileRow {
   kazicoins: number;
   unlocked_packs: PackId[];
   progress: Record<string, unknown>;
+  /** Code de parrainage (schema.sql § 7) */
+  ref_code?: string | null;
 }
 
 export interface LeaderboardRow {

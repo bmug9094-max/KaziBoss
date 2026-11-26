@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Coins, Sparkles, Trophy, X, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import { playChime, playSuccess } from '../../lib/sound';
 import { usePlayer } from '../../state/PlayerContext';
 import type { Lesson, ModuleColor, QuizKind } from '../../types';
 
@@ -31,7 +32,10 @@ export default function LessonPlayer({ lesson, moduleColor, onClose }: { lesson:
   const pick = (i: number) => {
     if (answered || !quiz) return;
     setPicked(i);
-    if (i === quiz.answer) setCorrect((c) => c + 1);
+    if (i === quiz.answer) {
+      setCorrect((c) => c + 1);
+      playChime();
+    }
   };
 
   const next = () => {
@@ -51,6 +55,7 @@ export default function LessonPlayer({ lesson, moduleColor, onClose }: { lesson:
       stats: { ...p.stats, quizCorrect: p.stats.quizCorrect + correct, quizAnswered: p.stats.quizAnswered + lesson.quiz.length },
     }));
     setFinished({ xp, coins });
+    playSuccess();
   };
 
   return (

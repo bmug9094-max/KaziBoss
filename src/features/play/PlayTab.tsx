@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { CalendarDays, Cloud, Play, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { getSector, isSectorUnlocked, sectorUnlockKey } from '../../config/sectors';
 import { ENERGY_REFILL_AMOUNT } from '../../config/shop';
 import {
   MAX_DAYS,
@@ -10,19 +11,22 @@ import {
   applyBoost,
   computeScore,
   getCard,
+  newlyLowGauges,
   resolveChoice,
   secondChance,
   startRun,
   type RunState,
 } from '../../lib/game';
-import { loadJSON, saveJSON } from '../../lib/storage';
+import { playAlert, playChime, playGameOver, playSuccess } from '../../lib/sound';
+import { loadJSON, saveJSON, todayISO } from '../../lib/storage';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { usePlayer } from '../../state/PlayerContext';
-import type { Effects } from '../../types';
+import type { Effects, SectorId } from '../../types';
 import EndScreen from './EndScreen';
 import GaugeBar from './GaugeBar';
 import OutcomePanel from './OutcomePanel';
 import ScenarioSwipe from './ScenarioSwipe';
+import SectorPicker from './SectorPicker';
 
 function loadRun(): RunState {
   const r = loadJSON<RunState>('run', NEW_RUN);
@@ -32,22 +36,37 @@ function loadRun(): RunState {
 }
 
 export default function PlayTab() {
-  const { profile, update, reward, spendCoins, recordActivity, hasPack, notify, user } = usePlayer();
+  const { profile, update, reward, spendCoins, recordActivity, hasPack, notify, user, shareInvite } = usePlayer();
   const [run, setRun] = useState<RunState>(loadRun);
   const [previewChoice, setPreviewChoice] = useState<'a' | 'b' | null>(null);
+  const [savedSector, setSector] = useState<SectorId | null>(() => loadJSON<SectorId | null>('sector', null));
   const packs = profile.unlockedPacks;
   const card = getCard(run.cardId);
+  // Un secteur sauvegardé mais plus accessible (ex. déconnexion d'un compte avec pack) retombe sur la boutique.
+  const sector = savedSector && isSectorUnlocked(profile, savedSector) ? savedSector : null;
+  const runSector = getSector(run.sector);
 
   useEffect(() => saveJSON('run', run), [run]);
+  useEffect(() => saveJSON('sector', savedSector), [savedSector]);
 
   const begin = () => {
-    setRun(startRun(packs));
+    setRun(startRun(packs, sector));
     setPreviewChoice(null);
+  };
+
+  const unlockSector = (id: SectorId) => {
+    const def = getSector(id);
+    if (!def || !spendCoins(def.coinPrice)) return;
+    update((p) => ({ ...p, coinUnlocks: [...p.coinUnlocks, sectorUnlockKey(id)] }));
+    setSector(id);
+    notify(`${def.emoji} Secteur débloqué : ${def.name}`, 'gold');
   };
 
   const choose = (c: 'a' | 'b') => {
     const next = resolveChoice(run, c);
     const res = next.lastResult!;
+    if (!res.failed.length && newlyLowGauges(run.gauges, next.gauges).length) playAlert();
+    else if (res.coins > 0) playChime();
     setRun(next);
     setPreviewChoice(null);
     reward(res.xp, res.coins);
@@ -69,6 +88,8 @@ export default function PlayTab() {
     if (next.status === 'gameover' || next.status === 'victory') {
       const won = next.status === 'victory';
       const score = computeScore(next);
+      if (won) playSuccess();
+      else playGameOver();
       if (won) reward(100, 50);
       update((p) => ({
         ...p,
@@ -131,8 +152,10 @@ export default function PlayTab() {
           </p>
         )}
 
+        <SectorPicker selected={sector} onSelect={setSector} onUnlock={unlockSector} />
+
         <button onClick={begin} className="btn-primary py-4 text-base">
-          <Play size={20} className="fill-slate-900" /> Ouvrir ma boutique
+          <Play size={20} className="fill-slate-900" /> {sector ? `Lancer : ${getSector(sector)?.name}` : 'Ouvrir ma boutique'}
         </button>
 
         {isSupabaseConfigured && !user && (
@@ -154,6 +177,8 @@ export default function PlayTab() {
         coins={profile.kazicoins}
         onReplay={begin}
         onSecondChance={handleSecondChance}
+        onShare={(score) => void shareInvite(score)}
+        shareBonusAvailable={profile.lastShareDate !== todayISO()}
       />
     );
   }
@@ -165,6 +190,11 @@ export default function PlayTab() {
         <p className="flex items-center gap-2 text-sm font-extrabold">
           <CalendarDays size={16} className="text-gold" /> Jour {run.day}
           <span className="text-muted">/ {MAX_DAYS}</span>
+          {runSector && (
+            <span className="chip text-[11px]" title={runSector.name}>
+              {runSector.emoji} {runSector.name.split(' ')[0]}
+            </span>
+          )}
         </p>
         {run.status === 'playing' && profile.energyRefills > 0 && run.gauges.energy < 100 && (
           <button onClick={handleEnergyRefill} className="chip text-gold hover:bg-surface-2">
@@ -178,14 +208,16 @@ export default function PlayTab() {
 
       <GaugeBar gauges={run.gauges} preview={run.status === 'playing' ? preview : null} delta={run.status === 'outcome' ? run.lastResult?.delta : null} />
 
+      {/* Sorties quasi instantanées : la carte est déjà partie en glissant, et le résultat
+          doit laisser place à la carte suivante sans écran vide (mode="wait" attend la sortie). */}
       <AnimatePresence mode="wait">
         {run.status === 'playing' && card && (
-          <motion.div key={card.id} exit={{ opacity: 0 }}>
+          <motion.div key={card.id} exit={{ opacity: 0, transition: { duration: 0 } }}>
             <ScenarioSwipe card={card} onChoose={choose} onPreview={setPreviewChoice} />
           </motion.div>
         )}
         {run.status === 'outcome' && (
-          <motion.div key="outcome" exit={{ opacity: 0 }}>
+          <motion.div key="outcome" exit={{ opacity: 0, transition: { duration: 0.08 } }}>
             <OutcomePanel run={run} onContinue={proceed} />
           </motion.div>
         )}

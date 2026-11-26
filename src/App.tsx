@@ -1,10 +1,11 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import BottomNav, { type TabId } from './components/BottomNav';
 import Toasts from './components/Toasts';
 import TopBar from './components/TopBar';
 import LearnTab from './features/learn/LearnTab';
 import PlayTab from './features/play/PlayTab';
+import PasswordRecoverySheet from './features/profile/PasswordRecoverySheet';
 import ProfileTab from './features/profile/ProfileTab';
 import ToolsTab from './features/tools/ToolsTab';
 
@@ -23,6 +24,8 @@ export default function App() {
   }, [tab]);
 
   return (
+    // reducedMotion="user" : animations coupées si le téléphone demande « réduire les animations ».
+    <MotionConfig reducedMotion="user">
     <div className="mx-auto flex min-h-dvh max-w-md flex-col bg-bg">
       <TopBar onOpenProfile={() => setTab('profile')} />
       <main className="flex-1 px-4 pb-28 pt-2">
@@ -43,6 +46,8 @@ export default function App() {
       </main>
       <BottomNav active={tab} onChange={setTab} />
       <Toasts />
+      <PasswordRecoverySheet />
     </div>
+    </MotionConfig>
   );
 }

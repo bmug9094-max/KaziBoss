@@ -90,6 +90,8 @@ export const BADGES: BadgeDef[] = [
   { id: 'quiz20', emoji: '🎯', name: 'Tête bien faite', description: '20 bonnes réponses aux quiz', test: (p) => p.stats.quizCorrect >= 20 },
   { id: 'toolbox', emoji: '🧰', name: 'Boîte à outils', description: 'Utiliser les 3 outils', test: (p) => p.toolsUsed.length >= 3 },
   { id: 'xp1000', emoji: '⚡', name: 'Mille éclairs', description: 'Cumuler 1 000 XP', test: (p) => p.xp >= 1000 },
+  { id: 'ambassador', emoji: '📣', name: 'Ambassadeur', description: 'Partager KaziBoss 5 fois', test: (p) => p.shares >= 5 },
+  { id: 'exporter', emoji: '🚢', name: 'Exportateur', description: 'Obtenir le Pack Agri-Business & Import-Export', test: (p) => p.unlockedPacks.includes('agri_import') },
 ];
 
 export function newlyEarnedBadges(p: PlayerProfile): BadgeDef[] {
