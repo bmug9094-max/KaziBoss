@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { CalendarDays, Cloud, Play, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getSector, isSectorUnlocked, sectorUnlockKey } from '../../config/sectors';
@@ -208,20 +208,13 @@ export default function PlayTab() {
 
       <GaugeBar gauges={run.gauges} preview={run.status === 'playing' ? preview : null} delta={run.status === 'outcome' ? run.lastResult?.delta : null} />
 
-      {/* Sorties quasi instantanées : la carte est déjà partie en glissant, et le résultat
-          doit laisser place à la carte suivante sans écran vide (mode="wait" attend la sortie). */}
-      <AnimatePresence mode="wait">
-        {run.status === 'playing' && card && (
-          <motion.div key={card.id} exit={{ opacity: 0, transition: { duration: 0 } }}>
-            <ScenarioSwipe card={card} onChoose={choose} onPreview={setPreviewChoice} />
-          </motion.div>
-        )}
-        {run.status === 'outcome' && (
-          <motion.div key="outcome" exit={{ opacity: 0, transition: { duration: 0.08 } }}>
-            <OutcomePanel run={run} onContinue={proceed} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Pas d'AnimatePresence ici : la carte s'en va déjà toute seule en glissant et chaque
+          panneau anime sa propre entrée. Avec AnimatePresence mode="wait", la fin de l'animation
+          de sortie n'était parfois jamais signalée : écran vide jusqu'au changement d'onglet. */}
+      {run.status === 'playing' && card && (
+        <ScenarioSwipe key={card.id} card={card} onChoose={choose} onPreview={setPreviewChoice} />
+      )}
+      {run.status === 'outcome' && <OutcomePanel key={`outcome-${run.day}`} run={run} onContinue={proceed} />}
     </div>
   );
 }
