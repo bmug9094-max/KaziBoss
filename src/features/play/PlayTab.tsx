@@ -2,7 +2,8 @@ import { motion } from 'framer-motion';
 import { CalendarDays, Cloud, Play, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getSector, isSectorUnlocked, sectorUnlockKey } from '../../config/sectors';
-import { ENERGY_REFILL_AMOUNT } from '../../config/shop';
+import { ENERGY_REFILL_AMOUNT, SIGNUP_BONUS } from '../../config/shop';
+import { openAuth } from '../../lib/ui';
 import {
   MAX_DAYS,
   NEW_RUN,
@@ -36,7 +37,7 @@ function loadRun(): RunState {
 }
 
 export default function PlayTab() {
-  const { profile, update, reward, spendCoins, recordActivity, hasPack, notify, user, shareInvite } = usePlayer();
+  const { profile, update, reward, spendCoins, recordActivity, hasPack, notify, user, shareInvite, maybePromptSave } = usePlayer();
   const [run, setRun] = useState<RunState>(loadRun);
   const [previewChoice, setPreviewChoice] = useState<'a' | 'b' | null>(null);
   const [savedSector, setSector] = useState<SectorId | null>(() => loadJSON<SectorId | null>('sector', null));
@@ -100,6 +101,7 @@ export default function PlayTab() {
           bestScore: Math.max(p.stats.bestScore, score),
         },
       }));
+      maybePromptSave();
     }
     setRun(next);
   };
@@ -159,10 +161,16 @@ export default function PlayTab() {
         </button>
 
         {isSupabaseConfigured && !user && (
-          <p className="flex items-start gap-2 rounded-2xl border border-line bg-surface p-3 text-xs text-muted">
-            <Cloud size={16} className="mt-0.5 shrink-0 text-sky" />
-            Mode invité : ta progression est sauvegardée sur ce téléphone. Crée un compte (onglet Boutique) pour garder ton streak et apparaître dans le classement.
-          </p>
+          <button
+            onClick={() => openAuth('save')}
+            className="flex items-start gap-3 rounded-2xl border border-gold/40 bg-gold/10 p-3 text-left text-xs transition hover:bg-gold/15"
+          >
+            <Cloud size={18} className="mt-0.5 shrink-0 text-gold" />
+            <span className="text-ink/85">
+              <b className="block text-sm text-ink">Sauvegarde ta progression · +{SIGNUP_BONUS} KaziCoins 🎁</b>
+              En mode invité, tout reste sur ce téléphone. Crée ton compte gratuit en 30 secondes.
+            </span>
+          </button>
         )}
       </div>
     );
@@ -174,6 +182,7 @@ export default function PlayTab() {
       <EndScreen
         run={run}
         unlimitedLives={hasPack('unlimited_lives')}
+        hasAgri={hasPack('agri_import')}
         coins={profile.kazicoins}
         onReplay={begin}
         onSecondChance={handleSecondChance}
@@ -185,7 +194,7 @@ export default function PlayTab() {
 
   // ───────── Partie en cours ─────────
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 short:gap-2.5">
       <div className="flex items-center justify-between">
         <p className="flex items-center gap-2 text-sm font-extrabold">
           <CalendarDays size={16} className="text-gold" /> Jour {run.day}

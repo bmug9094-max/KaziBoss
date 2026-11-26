@@ -71,6 +71,14 @@ Robustesse :
 - `src/config/sectors.ts` : 3 secteurs (Commerce & Distribution, Services & Digital, Agri-Business & Transformation). Chacun se débloque à un niveau donné, plus tôt avec des KaziCoins, ou avec le Pack Agri pour le dernier. Le joueur choisit son secteur au début du mois ; les cartes de ce secteur s'ajoutent au paquet de base et sortent plus souvent.
 - `src/lib/sound.ts` : sons synthétisés avec la Web Audio API (swipe, tintement, alerte quand une jauge passe sous 20, game over, réussite). Bouton ON/OFF dans la barre du haut, préférence enregistrée dans `localStorage`.
 
+## Inscription, conversion et expérience
+
+- **Écran d'ouverture** : animé en CSS pur dans `index.html`, visible avant même le chargement du JavaScript ; retiré par `src/lib/splash.ts` (animation complète à la 1re ouverture de la session, quasi instantané ensuite ; respecte « réduire les animations »).
+- **Inscription** : 100 KaziCoins offerts à la création du compte (`SIGNUP_BONUS`, une seule fois par compte). La feuille d'inscription est globale (`openAuth(raison)` dans `src/lib/ui.ts`) avec une accroche adaptée au contexte (sauvegarde, achat, classement, parrainage). Invitation douce à créer un compte en fin de mois et après une leçon (`maybePromptSave` : 1 fois par jour, 5 fois au maximum).
+- **Conversion** : offres contextuelles (Vies Illimitées sur l'écran de faillite, Pack Agri après un mois réussi, sur le secteur verrouillé et le module 4) qui mènent directement à la carte du pack (`goTo('profile', 'pack-…')`). Boutique : pack mis en avant, mention « paiement unique ».
+- **Petits écrans** : variante Tailwind `short:` (hauteur ≤ 760 px) qui compacte l'écran de jeu pour garder les boutons de choix visibles sans défiler, testée de 320 à 768 px de large.
+- ⚠️ Le service d'email intégré de Supabase est très limité (quelques emails par heure). Pour beaucoup d'inscriptions, configurer un SMTP (Resend, Brevo…) dans Supabase › Authentication › Emails › SMTP Settings.
+
 ## Structure
 
 ```

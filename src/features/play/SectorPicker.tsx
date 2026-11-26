@@ -1,5 +1,6 @@
 import { Check, Coins, Lock } from 'lucide-react';
 import { SECTORS, isSectorUnlocked } from '../../config/sectors';
+import { goTo } from '../../lib/ui';
 import { usePlayer } from '../../state/PlayerContext';
 import type { SectorId } from '../../types';
 
@@ -42,7 +43,14 @@ export default function SectorPicker({
                 </p>
                 <p className="text-xs text-muted">
                   Niveau {s.unlockLevel}
-                  {s.pack ? ' · inclus dans le Pack Agri-Business' : ''}
+                  {s.pack && (
+                    <>
+                      {' · '}
+                      <button onClick={() => goTo('profile', `pack-${s.pack}`)} className="font-bold text-gold underline-offset-2 hover:underline">
+                        inclus dans le Pack Agri →
+                      </button>
+                    </>
+                  )}
                 </p>
               </div>
               <button

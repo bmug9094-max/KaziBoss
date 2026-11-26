@@ -2,7 +2,8 @@ import { motion, useAnimationControls, useMotionValue, useTransform, type PanInf
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getSector } from '../../config/sectors';
-import { playSwipe } from '../../lib/sound';
+import { isSoundOn, playSwipe } from '../../lib/sound';
+import { haptic } from '../../lib/ui';
 import type { ScenarioCard } from '../../types';
 
 const CATEGORY_LABEL: Record<ScenarioCard['category'], string> = {
@@ -59,6 +60,7 @@ export default function ScenarioSwipe({
     setLocked(true);
     onPreview(c);
     playSwipe();
+    if (isSoundOn()) haptic();
     await controls.start({ x: c === 'a' ? -520 : 520, opacity: 0, transition: { duration: 0.2, ease: 'easeIn' } });
     onChoose(c);
   };
@@ -86,8 +88,10 @@ export default function ScenarioSwipe({
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="relative h-[21rem] select-none">
+    <div className="flex flex-col gap-4 short:gap-2.5">
+      {/* Hauteur adaptée à l'écran : sur un petit téléphone, la carte se compacte pour que
+          les boutons de choix restent visibles sans défiler. */}
+      <div className="relative h-[21rem] select-none short:h-[clamp(12.5rem,calc(100dvh-25rem),19rem)]">
         <motion.div
           drag={locked ? false : 'x'}
           dragConstraints={{ left: 0, right: 0 }}
@@ -107,8 +111,10 @@ export default function ScenarioSwipe({
             B · {card.b.label}
           </motion.div>
 
-          <div className="flex items-center gap-3 bg-gradient-to-br from-gold/20 via-transparent to-emerald/10 px-5 pb-4 pt-5">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-4xl">{card.avatar}</div>
+          <div className="flex items-center gap-3 bg-gradient-to-br from-gold/20 via-transparent to-emerald/10 px-5 pb-4 pt-5 short:px-4 short:pb-2.5 short:pt-3">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-4xl short:h-11 short:w-11 short:text-2xl">
+              {card.avatar}
+            </div>
             <div className="min-w-0">
               <p className="truncate text-base font-extrabold">{card.character}</p>
               <p className="truncate text-xs font-semibold text-muted">{card.role}</p>
@@ -119,10 +125,12 @@ export default function ScenarioSwipe({
               </span>
             </div>
           </div>
-          <div className="flex flex-1 flex-col px-5 pb-5">
-            <h3 className="text-xl font-extrabold leading-tight">{card.title}</h3>
-            <p className="mt-2 text-[15px] leading-relaxed text-ink/85">{card.text}</p>
-            <p className="mt-auto flex items-center justify-center gap-2 pt-3 text-[11px] font-semibold text-muted">
+          <div className="flex min-h-0 flex-1 flex-col px-5 pb-5 short:px-4 short:pb-3">
+            <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
+              <h3 className="text-xl font-extrabold leading-tight short:text-lg">{card.title}</h3>
+              <p className="mt-2 text-[15px] leading-relaxed text-ink/85 short:mt-1 short:text-sm short:leading-snug">{card.text}</p>
+            </div>
+            <p className="flex items-center justify-center gap-2 pt-3 text-[11px] font-semibold text-muted short:hidden">
               <ArrowLeft size={12} /> Glisse la carte ou touche un choix <ArrowRight size={12} />
             </p>
           </div>
@@ -141,7 +149,7 @@ export default function ScenarioSwipe({
               onMouseLeave={() => onPreview(armed)}
               onFocus={() => onPreview(c)}
               onClick={() => tap(c)}
-              className={`relative flex min-h-[5.5rem] flex-col items-start justify-between rounded-3xl border-2 p-3 text-left text-sm font-bold transition active:scale-[0.98] ${
+              className={`relative flex min-h-[5.5rem] flex-col items-start justify-between rounded-3xl border-2 p-3 text-left text-sm font-bold transition active:scale-[0.98] short:min-h-[4.25rem] short:rounded-2xl short:p-2.5 short:text-[13px] ${
                 on
                   ? accent === 'gold'
                     ? 'border-gold bg-gold text-slate-900'

@@ -1,7 +1,9 @@
-import { Loader2 } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { Gift, Loader2 } from 'lucide-react';
+import { useEffect, useState, type FormEvent } from 'react';
 import Sheet from '../../components/Sheet';
 import { LEGAL_LINKS } from '../../config/legal';
+import { REFERRAL_BONUS, SIGNUP_BONUS } from '../../config/shop';
+import type { AuthReason } from '../../lib/ui';
 import { usePlayer } from '../../state/PlayerContext';
 
 type Mode = 'signup' | 'signin' | 'reset';
@@ -12,9 +14,34 @@ const TITLES: Record<Mode, string> = {
   reset: 'Mot de passe oublié',
 };
 
-export default function AuthSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+/** Accroche adaptée au moment où l'inscription est proposée. */
+const HOOKS: Record<AuthReason, { title: string; text: string }> = {
+  save: { title: 'Ne perds pas ta progression', text: "Pour l'instant, tout est enregistré seulement sur ce téléphone. Un compte la met à l'abri en 30 secondes." },
+  buy: { title: 'Un compte pour ton achat', text: 'Ton pack sera lié à ton compte et restera à toi, même si tu changes de téléphone.' },
+  leaderboard: { title: 'Entre dans le classement', text: 'Mesure-toi aux autres boss de ta ville et grimpe chaque semaine.' },
+  referral: { title: 'Ton lien de parrainage', text: `Invite tes amis et gagne ${REFERRAL_BONUS} KaziCoins pour chaque ami qui joue.` },
+  default: { title: 'Rejoins les KaziBoss', text: 'Sauvegarde ta progression, protège ton streak et entre dans le classement de ta ville.' },
+};
+
+const PERKS = [
+  { emoji: '🎁', text: `${SIGNUP_BONUS} KaziCoins offerts tout de suite` },
+  { emoji: '☁️', text: 'Ta progression sur tous tes téléphones' },
+  { emoji: '🏆', text: 'Le classement de ta ville' },
+  { emoji: '🤝', text: `Ton lien de parrainage : +${REFERRAL_BONUS} par ami` },
+];
+
+export default function AuthSheet({ open, reason = 'default', onClose }: { open: boolean; reason?: AuthReason; onClose: () => void }) {
   const { signIn, signUp, requestPasswordReset, notify, profile } = usePlayer();
   const [mode, setMode] = useState<Mode>('signup');
+  const hook = HOOKS[reason];
+
+  // Chaque ouverture repart sur l'inscription, sans ancien message.
+  useEffect(() => {
+    if (open) {
+      setMode('signup');
+      setMessage(null);
+    }
+  }, [open]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState(profile.username === 'Invité' ? '' : profile.username);
@@ -48,12 +75,25 @@ export default function AuthSheet({ open, onClose }: { open: boolean; onClose: (
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title={TITLES[mode]}>
-      <p className="mb-4 text-sm text-muted">
-        {mode === 'reset'
-          ? "Indique l'email de ton compte : nous t'envoyons un lien pour choisir un nouveau mot de passe."
-          : 'Sauvegarde ta progression, protège ton streak et entre dans le classement de ta ville.'}
-      </p>
+    <Sheet open={open} onClose={onClose} title={mode === 'signup' ? hook.title : TITLES[mode]}>
+      {mode === 'signup' ? (
+        <div className="mb-4">
+          <p className="text-sm text-muted">{hook.text}</p>
+          <ul className="mt-3 grid grid-cols-1 gap-1.5 rounded-2xl bg-gold/10 p-3">
+            {PERKS.map((p) => (
+              <li key={p.text} className="flex items-start gap-2 text-xs font-semibold leading-snug">
+                <span className="text-base leading-none">{p.emoji}</span> {p.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="mb-4 text-sm text-muted">
+          {mode === 'reset'
+            ? "Indique l'email de ton compte : nous t'envoyons un lien pour choisir un nouveau mot de passe."
+            : 'Content de te revoir, boss !'}
+        </p>
+      )}
       <form onSubmit={submit} className="space-y-3">
         {mode === 'signup' && (
           <div className="grid grid-cols-2 gap-3">
@@ -106,7 +146,15 @@ export default function AuthSheet({ open, onClose }: { open: boolean; onClose: (
         {message && <p className={`rounded-2xl p-3 text-sm ${message.error ? 'bg-coral/15 text-coral' : 'bg-emerald/15 text-emerald'}`}>{message.text}</p>}
         <button type="submit" disabled={busy} className="btn-primary w-full py-3.5">
           {busy && <Loader2 size={18} className="animate-spin" />}
-          {mode === 'reset' ? 'Envoyer le lien' : TITLES[mode]}
+          {mode === 'reset' ? (
+            'Envoyer le lien'
+          ) : mode === 'signup' ? (
+            <>
+              Créer mon compte gratuit · +{SIGNUP_BONUS} <Gift size={16} />
+            </>
+          ) : (
+            TITLES[mode]
+          )}
         </button>
       </form>
       <button onClick={() => switchTo(mode === 'signup' ? 'signin' : 'signup')} className="mt-4 w-full text-center text-sm font-bold text-gold">

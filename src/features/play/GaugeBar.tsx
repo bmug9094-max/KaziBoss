@@ -36,7 +36,7 @@ export default function GaugeBar({ gauges, preview, delta }: { gauges: Gauges; p
                 )}
               </AnimatePresence>
             </div>
-            <div className={`relative h-16 w-full overflow-hidden rounded-2xl border ${danger ? 'border-coral/70' : 'border-line'} bg-surface`}>
+            <div className={`relative h-16 w-full overflow-hidden rounded-2xl border short:h-12 ${danger ? 'border-coral/70' : 'border-line'} bg-surface`}>
               <motion.div
                 className="absolute inset-x-0 bottom-0"
                 style={{ backgroundColor: GAUGE_META[k].color, opacity: 0.85 }}

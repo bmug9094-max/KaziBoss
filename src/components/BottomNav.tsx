@@ -13,7 +13,7 @@ const ITEMS: { id: TabId; label: string; icon: LucideIcon }[] = [
 export default function BottomNav({ active, onChange }: { active: TabId; onChange: (t: TabId) => void }) {
   return (
     <nav className="pb-safe fixed inset-x-0 bottom-0 z-30 border-t border-line/70 bg-bg/90 backdrop-blur-lg">
-      <ul className="mx-auto flex max-w-md items-stretch justify-around px-2 pt-1.5">
+      <ul className="mx-auto flex max-w-md items-stretch justify-around px-2 pt-1.5 md:max-w-lg">
         {ITEMS.map(({ id, label, icon: Icon }) => {
           const on = id === active;
           return (

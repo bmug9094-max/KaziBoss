@@ -19,6 +19,9 @@ export const COIN_ITEMS = {
 
 export const ENERGY_REFILL_AMOUNT = 30;
 
+/** Cadeau de bienvenue à la création du compte (versé une seule fois, voir PlayerContext) */
+export const SIGNUP_BONUS = 100;
+
 /** BONUS DE PARTAGE ET DE PARRAINAGE */
 export const SHARE_DAILY_BONUS = 10; // KaziCoins, une fois par jour quand on partage le jeu
 export const REFERRAL_BONUS = 100; // pour le parrain (attribué par le serveur, voir schema.sql § 7)
@@ -35,11 +38,14 @@ export interface PremiumPack {
   url: string;
   /** Lien de ressource (pas de déblocage dans l'app) */
   external?: boolean;
+  /** Bandeau de mise en avant dans la Boutique (choix éditorial, pas une statistique) */
+  badge?: string;
 }
 
 export const PREMIUM_PACKS: PremiumPack[] = [
   {
     id: 'agri_import',
+    badge: '⭐ Recommandé · le plus complet',
     name: 'Pack Agri-Business & Import-Export',
     tagline: 'Remonte la chaîne de valeur, de la récolte au conteneur.',
     perks: [

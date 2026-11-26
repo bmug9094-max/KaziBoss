@@ -16,7 +16,7 @@ const COINS_PER_CORRECT = 5;
 const COMPLETION_BONUS = 10;
 
 export default function LessonPlayer({ lesson, moduleColor, onClose }: { lesson: Lesson; moduleColor: ModuleColor; onClose: () => void }) {
-  const { profile, reward, update, recordActivity } = usePlayer();
+  const { profile, reward, update, recordActivity, maybePromptSave } = usePlayer();
   const alreadyDone = profile.completedLessons.includes(lesson.id);
   const steps = lesson.theory.length + lesson.quiz.length;
   const [step, setStep] = useState(0);
@@ -56,6 +56,7 @@ export default function LessonPlayer({ lesson, moduleColor, onClose }: { lesson:
     }));
     setFinished({ xp, coins });
     playSuccess();
+    maybePromptSave();
   };
 
   return (

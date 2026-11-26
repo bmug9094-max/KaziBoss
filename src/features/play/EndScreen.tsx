@@ -1,11 +1,14 @@
 import { motion } from 'framer-motion';
 import { Crown, GraduationCap, HeartPulse, RotateCcw, Share2, Skull, TrendingDown } from 'lucide-react';
-import { SHARE_DAILY_BONUS } from '../../config/shop';
+import { PREMIUM_PACKS, SHARE_DAILY_BONUS } from '../../config/shop';
 import { FAILURE_ANALYSIS, GAUGE_META, SECOND_CHANCE_COST, computeScore, costliestDecisions, type RunState } from '../../lib/game';
+import { goTo } from '../../lib/ui';
+import type { PackId } from '../../types';
 
 interface Props {
   run: RunState;
   unlimitedLives: boolean;
+  hasAgri: boolean;
   coins: number;
   onReplay: () => void;
   onSecondChance: () => void;
@@ -13,7 +16,27 @@ interface Props {
   shareBonusAvailable: boolean;
 }
 
-export default function EndScreen({ run, unlimitedLives, coins, onReplay, onSecondChance, onShare, shareBonusAvailable }: Props) {
+/** Encart d'offre contextuel : envoie vers la carte du pack dans la Boutique. */
+function PackOffer({ id, title, text, strong }: { id: PackId; title: string; text: string; strong?: boolean }) {
+  const pack = PREMIUM_PACKS.find((p) => p.id === id)!;
+  return (
+    <button
+      onClick={() => goTo('profile', `pack-${id}`)}
+      className={`flex items-center gap-3 rounded-3xl border p-4 text-left transition active:scale-[0.99] ${
+        strong ? 'border-gold bg-gold/15' : 'border-line bg-surface hover:border-gold/60'
+      }`}
+    >
+      <span className="text-3xl">{pack.emoji}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-extrabold">{title}</span>
+        <span className="block text-xs text-muted">{text}</span>
+      </span>
+      <span className="shrink-0 rounded-full bg-gold px-3 py-1.5 text-xs font-extrabold text-slate-900">{pack.price}</span>
+    </button>
+  );
+}
+
+export default function EndScreen({ run, unlimitedLives, hasAgri, coins, onReplay, onSecondChance, onShare, shareBonusAvailable }: Props) {
   const score = computeScore(run);
   const victory = run.status === 'victory';
 
@@ -43,6 +66,13 @@ export default function EndScreen({ run, unlimitedLives, coins, onReplay, onSeco
         <button onClick={onReplay} className="btn-primary">
           <RotateCcw size={18} /> Nouveau mois
         </button>
+        {!hasAgri && (
+          <PackOffer
+            id="agri_import"
+            title="Prêt pour le niveau supérieur ?"
+            text="Récolte, conteneur, douane : 22 nouveaux défis et le module Croissance & Équipe."
+          />
+        )}
       </motion.div>
     );
   }
@@ -104,6 +134,14 @@ export default function EndScreen({ run, unlimitedLives, coins, onReplay, onSeco
           <HeartPulse size={18} />
           {unlimitedLives ? 'Seconde chance (illimitée)' : `Seconde chance · ${SECOND_CHANCE_COST} KaziCoins`}
         </button>
+      )}
+      {!unlimitedLives && (
+        <PackOffer
+          id="unlimited_lives"
+          strong={!affordable || !canSecondChance}
+          title={!canSecondChance ? 'Plus de seconde chance ce mois-ci' : !affordable ? 'Pas assez de KaziCoins ?' : 'Ne recommence plus jamais à zéro'}
+          text="Secondes chances gratuites et illimitées, à vie. Paiement unique."
+        />
       )}
       <button onClick={onReplay} className="btn-primary">
         <RotateCcw size={18} /> Rejouer un nouveau mois

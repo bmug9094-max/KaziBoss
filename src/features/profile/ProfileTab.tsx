@@ -23,8 +23,8 @@ import { LEGAL_LINKS } from '../../config/legal';
 import { COIN_ITEMS, PREMIUM_PACKS, buildCheckoutUrl, type PremiumPack } from '../../config/shop';
 import { BADGES, displayStreak, levelInfo } from '../../lib/progress';
 import { isSupabaseConfigured } from '../../lib/supabase';
+import { openAuth } from '../../lib/ui';
 import { usePlayer } from '../../state/PlayerContext';
-import AuthSheet from './AuthSheet';
 import BuyerSheet, { type BuyerInfo } from './BuyerSheet';
 import InviteCard from './InviteCard';
 import Leaderboard from './Leaderboard';
@@ -46,7 +46,6 @@ export default function ProfileTab() {
     restorePurchases,
     deleteAccount,
   } = usePlayer();
-  const [authOpen, setAuthOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [paying, setPaying] = useState<PremiumPack['id'] | null>(null);
@@ -79,8 +78,7 @@ export default function ProfileTab() {
       return;
     }
     if (!email) {
-      setAuthOpen(true);
-      return notify('Crée un compte pour lier ton achat à ta progression.', 'info');
+      return openAuth('buy');
     }
     if (isSupabaseConfigured) return setBuying(pack); // formulaire acheteur, puis checkout serveur
     fallbackLink(pack, 'Paiement non configuré.');
@@ -171,7 +169,7 @@ export default function ProfileTab() {
               <LogOut size={14} />
             </button>
           ) : (
-            <button onClick={() => setAuthOpen(true)} className="btn-primary px-3 py-2 text-xs">
+            <button onClick={() => openAuth()} className="btn-primary px-3 py-2 text-xs">
               Créer un compte
             </button>
           ))}
@@ -228,13 +226,21 @@ export default function ProfileTab() {
       </section>
 
       {/* Packs premium */}
-      <section>
-        <h2 className="mb-2 px-1 text-lg font-extrabold">Packs Premium</h2>
+      <section id="packs" className="scroll-mt-24">
+        <h2 className="mb-1 px-1 text-lg font-extrabold">Packs Premium</h2>
+        <p className="mb-2 px-1 text-xs text-muted">Paiement unique, sans abonnement · le pack reste à toi, sur tous tes téléphones.</p>
         <div className="space-y-3">
           {PREMIUM_PACKS.map((pack) => {
             const owned = !pack.external && hasPack(pack.id);
             return (
-              <div key={pack.id} className={`card overflow-hidden ${pack.external ? 'border-emerald/50' : ''}`}>
+              <div
+                key={pack.id}
+                id={`pack-${pack.id}`}
+                className={`card scroll-mt-24 overflow-hidden ${pack.badge && !owned ? 'border-gold/70 ring-1 ring-gold/30' : pack.external ? 'border-emerald/50' : ''}`}
+              >
+                {pack.badge && !owned && (
+                  <p className="bg-gold px-4 py-1 text-center text-[11px] font-extrabold uppercase tracking-wider text-slate-900">{pack.badge}</p>
+                )}
                 <div className="flex gap-3 p-4">
                   <span className="text-4xl">{pack.emoji}</span>
                   <div className="min-w-0 flex-1">
@@ -288,9 +294,9 @@ export default function ProfileTab() {
         )}
       </section>
 
-      <InviteCard onSignup={() => setAuthOpen(true)} />
+      <InviteCard onSignup={() => openAuth('referral')} />
 
-      <Leaderboard onSignup={() => setAuthOpen(true)} />
+      <Leaderboard onSignup={() => openAuth('leaderboard')} />
 
       {/* Réglages */}
       <section className="card space-y-2 p-4">
@@ -348,7 +354,6 @@ export default function ProfileTab() {
         </div>
       </section>
 
-      <AuthSheet open={authOpen} onClose={() => setAuthOpen(false)} />
       <BuyerSheet
         key={buying?.id ?? 'none'}
         open={buying !== null}

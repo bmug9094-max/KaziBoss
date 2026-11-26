@@ -1,7 +1,8 @@
 import type { User } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { newlyEarnedBadges, touchStreak } from '../lib/progress';
-import { SHARE_DAILY_BONUS } from '../config/shop';
+import { SHARE_DAILY_BONUS, SIGNUP_BONUS } from '../config/shop';
+import { openAuth } from '../lib/ui';
 import { clearReferral, inviteText, pendingReferral, shareGame, shareUrl } from '../lib/share';
 import { loadJSON, removeKey, saveJSON, todayISO } from '../lib/storage';
 import { isSupabaseConfigured, supabase, type ProfileRow } from '../lib/supabase';
@@ -38,6 +39,9 @@ export const DEFAULT_PROFILE: PlayerProfile = {
   theme: 'dark',
   lastShareDate: null,
   shares: 0,
+  signupBonus: false,
+  savePromptCount: 0,
+  savePromptDate: null,
 };
 
 const STORAGE_KEY = 'profile';
@@ -97,6 +101,8 @@ interface PlayerContextValue {
   /** Partage le jeu (avec le lien de parrainage) et donne le bonus du jour */
   shareInvite: (score?: number) => Promise<void>;
   referralStats: () => Promise<{ invited: number; rewarded: number } | null>;
+  /** Invite un joueur invité à créer son compte (fréquence limitée) */
+  maybePromptSave: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -120,6 +126,7 @@ function progressOf(p: PlayerProfile) {
     stats: p.stats,
     lastShareDate: p.lastShareDate,
     shares: p.shares,
+    signupBonus: p.signupBonus,
   };
 }
 
@@ -156,6 +163,7 @@ function mergeFromRow(local: PlayerProfile, row: ProfileRow): PlayerProfile {
     stats,
     lastShareDate: laterDate(local.lastShareDate, remote.lastShareDate),
     shares: Math.max(local.shares, remote.shares ?? 0),
+    signupBonus: local.signupBonus || Boolean(remote.signupBonus),
   };
 }
 
@@ -243,8 +251,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (data) {
-      setProfile((p) => mergeFromRow(p, data as ProfileRow));
-      setRefCode((data as ProfileRow).ref_code ?? null);
+      const row = data as ProfileRow;
+      // Cadeau de bienvenue : une seule fois par compte (drapeau synchronisé dans progress).
+      const alreadyGiven = Boolean((row.progress as { signupBonus?: boolean } | null)?.signupBonus) || profileRef.current.signupBonus;
+      setProfile((p) => {
+        const merged = mergeFromRow(p, row);
+        if (merged.signupBonus) return merged;
+        return { ...merged, signupBonus: true, kazicoins: merged.kazicoins + SIGNUP_BONUS };
+      });
+      if (!alreadyGiven) notify(`🎁 Bienvenue ! +${SIGNUP_BONUS} KaziCoins offerts`, 'gold');
+      setRefCode(row.ref_code ?? null);
     }
     setSynced(true);
     // Achats payés avant la création du compte (ou avec un simple lien de paiement).
@@ -455,6 +471,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     [refCode, notify],
   );
 
+  /**
+   * Propose (sans forcer) de créer un compte à un moment où le joueur a quelque chose à perdre :
+   * fin de mois, leçon terminée. Au plus 1 fois par jour et 5 fois au total.
+   */
+  const maybePromptSave = useCallback(() => {
+    const p = profileRef.current;
+    const today = todayISO();
+    if (!isSupabaseConfigured || user || p.savePromptDate === today || p.savePromptCount >= 5) return;
+    setProfile((x) => ({ ...x, savePromptDate: today, savePromptCount: x.savePromptCount + 1 }));
+    window.setTimeout(() => openAuth('save'), 1200); // laisse le temps de voir l'écran de fin
+  }, [user]);
+
   const referralStats = useCallback(async () => {
     if (!supabase || !user) return null;
     const { data, error } = await supabase.rpc('my_referral_stats');
@@ -491,6 +519,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       refCode,
       shareInvite,
       referralStats,
+      maybePromptSave,
     }),
     [
       profile,
@@ -517,6 +546,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       refCode,
       shareInvite,
       referralStats,
+      maybePromptSave,
     ],
   );
 

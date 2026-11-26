@@ -20,6 +20,12 @@ export default {
       fontFamily: {
         sans: ['"Plus Jakarta Sans Variable"', 'system-ui', 'sans-serif'],
       },
+      // `short:` = écrans peu hauts (petits Android, iPhone SE, navigateur avec barre d'adresse) :
+      // on compacte l'écran de jeu pour que les boutons de choix restent visibles sans défiler.
+      screens: {
+        short: { raw: '(max-height: 760px)' },
+        tiny: { raw: '(max-height: 640px)' },
+      },
       boxShadow: {
         card: '0 10px 30px -12px rgb(0 0 0 / 0.45)',
         glow: '0 0 0 4px rgb(245 158 11 / 0.18)',

@@ -21,16 +21,18 @@ export default function TopBar({ onOpenProfile }: { onOpenProfile: () => void })
   return (
     <header className="pt-safe sticky top-0 z-20 bg-bg/90 px-4 pb-2 backdrop-blur-lg">
       <div className="flex items-center justify-between gap-2 pt-1">
-        <div className="flex items-center gap-2">
-          <img src="/icons/icon.svg" alt="" className="h-9 w-9 rounded-xl" />
-          <div className="leading-tight">
+        <div className="flex min-w-0 items-center gap-2">
+          <img src="/icons/icon.svg" alt="" className="h-9 w-9 shrink-0 rounded-xl" />
+          <div className="min-w-0 leading-tight">
             <p className="text-lg font-extrabold tracking-tight">
               Kazi<span className="text-gold">Boss</span>
             </p>
-            <p className="text-[11px] font-semibold text-muted">Niv. {lvl.level} · {lvl.title}</p>
+            <p className="truncate text-[11px] font-semibold text-muted" title={lvl.title}>
+              Niv. {lvl.level} · {lvl.title}
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5">
           <button
             onClick={toggleSound}
             className="rounded-full p-1.5 text-muted transition hover:bg-surface-2 hover:text-ink"

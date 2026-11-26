@@ -133,4 +133,9 @@ export interface PlayerProfile {
   lastShareDate: string | null;
   /** Nombre total de partages (badge Ambassadeur) */
   shares: number;
+  /** Cadeau de bienvenue déjà versé à la création du compte */
+  signupBonus: boolean;
+  /** Invitations « sauvegarde ta progression » déjà montrées (au plus 1 par jour, 5 au total) */
+  savePromptCount: number;
+  savePromptDate: string | null;
 }

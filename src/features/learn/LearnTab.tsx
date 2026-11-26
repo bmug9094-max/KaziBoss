@@ -3,6 +3,7 @@ import { Check, Crown, Lock, Star } from 'lucide-react';
 import { useState } from 'react';
 import { COIN_ITEMS } from '../../config/shop';
 import { LEARNING_MODULES, TOTAL_QUIZ_COUNT } from '../../data/gameContent';
+import { goTo } from '../../lib/ui';
 import { usePlayer } from '../../state/PlayerContext';
 import type { Lesson, LearningModule, ModuleColor } from '../../types';
 import LessonPlayer from './LessonPlayer';
@@ -17,7 +18,7 @@ const COLOR: Record<ModuleColor, { bg: string; ring: string; text: string; grad:
 /** Décalage horizontal façon Duolingo */
 const OFFSETS = [0, 56, 0, -56];
 
-export default function LearnTab({ onGoShop }: { onGoShop: () => void }) {
+export default function LearnTab() {
   const { profile, module4Unlocked, spendCoins, update, notify } = usePlayer();
   const [active, setActive] = useState<{ lesson: Lesson; module: LearningModule } | null>(null);
   const done = new Set(profile.completedLessons);
@@ -124,8 +125,8 @@ export default function LearnTab({ onGoShop }: { onGoShop: () => void }) {
                   <button onClick={unlockModule4} className="btn-primary px-2 text-xs">
                     {COIN_ITEMS.module4.price} KaziCoins
                   </button>
-                  <button onClick={onGoShop} className="btn-ghost px-2 text-xs">
-                    Voir les packs
+                  <button onClick={() => goTo('profile', 'pack-agri_import')} className="btn-ghost px-2 text-xs">
+                    Pack Agri · 5 $
                   </button>
                 </div>
               </div>
