@@ -9,6 +9,7 @@ import AuthSheet from './features/profile/AuthSheet';
 import PasswordRecoverySheet from './features/profile/PasswordRecoverySheet';
 import ProfileTab from './features/profile/ProfileTab';
 import ToolsTab from './features/tools/ToolsTab';
+import FeedbackSheet from './features/feedback/FeedbackSheet';
 import { onGoTo, onOpenAuth, type AuthReason } from './lib/ui';
 
 const TABS: TabId[] = ['play', 'learn', 'tools', 'profile'];
@@ -71,6 +72,7 @@ export default function App() {
         <Toasts />
         <AuthSheet open={auth.open} reason={auth.reason} onClose={() => setAuth((a) => ({ ...a, open: false }))} />
         <PasswordRecoverySheet />
+        <FeedbackSheet />
       </div>
     </MotionConfig>
   );

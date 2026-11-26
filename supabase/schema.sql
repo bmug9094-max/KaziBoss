@@ -448,3 +448,67 @@ end $$;
 
 revoke all on function public.claim_referral(text) from public, anon;
 grant execute on function public.claim_referral(text) to authenticated;
+
+-- ───────────────────────── 9. AVIS DES JOUEURS ─────────────────────────
+-- Retours envoyés depuis l'app, avec ou sans compte : idées, bugs, note de recommandation (0-10),
+-- et votes « utile / pas utile » sur les Leçons Terrain et les leçons.
+-- Écriture seule pour les joueurs : personne ne peut relire les avis depuis l'app.
+-- Lecture : Supabase › Table Editor › feedback, ou les requêtes en bas de cette section.
+create table if not exists public.feedback (
+  id         bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  user_id    uuid default auth.uid() references auth.users (id) on delete set null,
+  kind       text not null check (kind in ('idea', 'bug', 'other', 'nps', 'card', 'lesson')),
+  rating     smallint check (rating between 0 and 10),
+  message    text check (char_length(message) <= 1000),
+  lang       text check (lang in ('fr', 'en')),
+  context    jsonb not null default '{}'::jsonb check (pg_column_size(context) <= 4000),
+  status     text not null default 'new' check (status in ('new', 'read', 'planned', 'done', 'ignored'))
+);
+create index if not exists feedback_created_idx on public.feedback (created_at desc);
+create index if not exists feedback_kind_idx on public.feedback (kind, created_at desc);
+
+alter table public.feedback enable row level security;
+
+drop policy if exists "feedback_insert" on public.feedback;
+create policy "feedback_insert" on public.feedback
+  for insert to anon, authenticated
+  with check (user_id is null or user_id = (select auth.uid()));
+
+revoke all on public.feedback from anon, authenticated;
+grant insert (kind, rating, message, lang, context) on public.feedback to anon, authenticated;
+
+-- Garde-fou anti-spam : 30 avis par jour et par appareil (ou par compte).
+create or replace function public.feedback_rate_limit()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if (
+    select count(*) from public.feedback
+     where created_at > now() - interval '1 day'
+       and (
+         (new.user_id is not null and user_id = new.user_id)
+         or (new.context ? 'device' and context ->> 'device' = new.context ->> 'device')
+       )
+  ) >= 30 then
+    raise exception 'Trop d''avis envoyés aujourd''hui';
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists feedback_rate_limit on public.feedback;
+create trigger feedback_rate_limit before insert on public.feedback
+  for each row execute function public.feedback_rate_limit();
+
+-- Requêtes utiles (à lancer dans le SQL Editor) :
+--   Derniers messages écrits :
+--     select created_at, kind, rating, lang, message, context ->> 'screen' as ecran
+--       from public.feedback where message is not null order by created_at desc limit 100;
+--   Note de recommandation (NPS) sur 30 jours : % de 9-10 moins % de 0-6 :
+--     select round(100.0 * (count(*) filter (where rating >= 9) - count(*) filter (where rating <= 6)) / nullif(count(*), 0)) as nps,
+--            count(*) as reponses
+--       from public.feedback where kind = 'nps' and created_at > now() - interval '30 days';
+--   Leçons Terrain jugées les moins utiles :
+--     select context ->> 'cardId' as carte, count(*) filter (where rating = 0) as pas_utile, count(*) as votes
+--       from public.feedback where kind = 'card' group by 1 having count(*) >= 3 order by 2 desc limit 20;
+--   Marquer un avis comme traité :
+--     update public.feedback set status = 'done' where id = 123;

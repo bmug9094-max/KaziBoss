@@ -2,12 +2,17 @@ import { motion } from 'framer-motion';
 import { Crown, GraduationCap, HeartPulse, RotateCcw, Share2, Skull, TrendingDown } from 'lucide-react';
 import { PREMIUM_PACKS, SHARE_DAILY_BONUS } from '../../config/shop';
 import { FAILURE_ANALYSIS, GAUGE_META, SECOND_CHANCE_COST, computeScore, costliestDecisions, type RunState } from '../../lib/game';
+import { useState } from 'react';
+import { npsDue } from '../../lib/feedback';
 import { goTo } from '../../lib/ui';
+import NpsCard from '../feedback/NpsCard';
 import type { PackId } from '../../types';
 import { L, usd } from '../../i18n';
 
 interface Props {
   run: RunState;
+  /** Nombre de mois joués (pour la question de recommandation) */
+  runsPlayed: number;
   unlimitedLives: boolean;
   hasAgri: boolean;
   coins: number;
@@ -37,9 +42,12 @@ function PackOffer({ id, title, text, strong }: { id: PackId; title: string; tex
   );
 }
 
-export default function EndScreen({ run, unlimitedLives, hasAgri, coins, onReplay, onSecondChance, onShare, shareBonusAvailable }: Props) {
+export default function EndScreen({ run, runsPlayed, unlimitedLives, hasAgri, coins, onReplay, onSecondChance, onShare, shareBonusAvailable }: Props) {
   const score = computeScore(run);
   const victory = run.status === 'victory';
+  // Décidé une seule fois : la carte ne doit pas disparaître pendant que le joueur répond.
+  const [askNps] = useState(() => npsDue(runsPlayed));
+  const nps = askNps ? <NpsCard context={{ screen: 'end_of_month', victory, day: run.day, score, runsPlayed }} /> : null;
 
   if (victory) {
     return (
@@ -67,6 +75,7 @@ export default function EndScreen({ run, unlimitedLives, hasAgri, coins, onRepla
         <button onClick={onReplay} className="btn-primary">
           <RotateCcw size={18} /> {L('Nouveau mois', 'New month')}
         </button>
+        {nps}
         {!hasAgri && (
           <PackOffer
             id="agri_import"
@@ -146,6 +155,7 @@ export default function EndScreen({ run, unlimitedLives, hasAgri, coins, onRepla
       <button onClick={onReplay} className="btn-primary">
         <RotateCcw size={18} /> {L('Rejouer un nouveau mois', 'Play a new month')}
       </button>
+      {nps}
       <p className="flex items-center justify-center gap-2 text-center text-xs text-muted">
         <GraduationCap size={14} /> {L("Révise le module correspondant dans l'onglet Apprendre.", 'Review the matching module in the Learn tab.')}
       </p>

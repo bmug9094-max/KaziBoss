@@ -15,6 +15,9 @@ interface ImportMetaEnv {
   readonly VITE_CHARIOW_RESOURCES_URL?: string;
 }
 
+/** Date du build (vite.config.ts › define), jointe aux avis pour savoir quelle version le joueur utilisait. */
+declare const __BUILD__: string;
+
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }

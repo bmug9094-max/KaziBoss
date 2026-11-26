@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Coins, Lightbulb, ShoppingBag, Sparkles } from 'lucide-react';
 import { GAUGE_KEYS, GAUGE_META, MAX_DAYS, getCard, type RunState } from '../../lib/game';
 import { L, usd } from '../../i18n';
+import QuickVote from '../feedback/QuickVote';
 
 export default function OutcomePanel({ run, onContinue }: { run: RunState; onContinue: () => void }) {
   const res = run.lastResult;
@@ -72,6 +73,12 @@ export default function OutcomePanel({ run, onContinue }: { run: RunState; onCon
           <Lightbulb size={16} /> {L('Leçon Terrain', 'Field Lesson')}
         </p>
         <p className="mt-2 text-[15px] leading-relaxed">{choice.lesson}</p>
+        <QuickVote
+          id={`${card.id}:${res.choice}`}
+          kind="card"
+          question={L('Cette leçon t’a été utile ?', 'Was this lesson useful?')}
+          context={{ screen: 'field_lesson', cardId: card.id, choice: res.choice, day: run.day, sector: run.sector ?? null }}
+        />
       </motion.div>
 
       <button onClick={onContinue} className={failing ? 'btn bg-coral text-white' : 'btn-primary'}>

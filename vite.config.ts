@@ -6,6 +6,8 @@ export default defineConfig({
   // NEXT_PUBLIC_* : variables publiques posées par l'intégration Vercel ↔ Supabase (URL + clé anon).
   // Ne JAMAIS nommer un secret avec ces préfixes : il serait inclus dans le code envoyé aux navigateurs.
   envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
+  // Version jointe aux avis des joueurs (src/lib/feedback.ts).
+  define: { __BUILD__: JSON.stringify(new Date().toISOString().slice(0, 16)) },
   build: {
     rollupOptions: {
       output: {

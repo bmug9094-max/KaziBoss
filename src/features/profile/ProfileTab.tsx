@@ -18,13 +18,14 @@ import {
   Trash2,
   Trophy,
   Languages,
+  MessageCircleHeart,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { LEGAL_LINKS } from '../../config/legal';
 import { COIN_ITEMS, PREMIUM_PACKS, buildCheckoutUrl, type PremiumPack } from '../../config/shop';
 import { BADGES, displayStreak, levelInfo } from '../../lib/progress';
 import { isSupabaseConfigured } from '../../lib/supabase';
-import { openAuth } from '../../lib/ui';
+import { openAuth, openFeedback } from '../../lib/ui';
 import { usePlayer } from '../../state/PlayerContext';
 import BuyerSheet, { type BuyerInfo } from './BuyerSheet';
 import InviteCard from './InviteCard';
@@ -309,6 +310,9 @@ export default function ProfileTab() {
       {/* Réglages */}
       <section className="card space-y-2 p-4">
         <h2 className="font-extrabold">{L('Réglages', 'Settings')}</h2>
+        <button onClick={() => openFeedback({ context: { screen: 'settings' } })} className="btn-ghost w-full justify-start border-gold/50 text-gold">
+          <MessageCircleHeart size={16} /> {L('Donner mon avis · signaler un problème', 'Give feedback · report a problem')}
+        </button>
         <div className="flex items-center justify-between gap-3 rounded-2xl bg-surface-2/50 px-4 py-2.5">
           <span className="flex items-center gap-2 text-sm font-bold">
             <Languages size={16} /> {L('Langue', 'Language')}

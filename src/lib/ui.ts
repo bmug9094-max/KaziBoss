@@ -34,6 +34,25 @@ export function onOpenAuth(fn: (reason: AuthReason) => void): () => void {
   return () => window.removeEventListener(AUTH, h);
 }
 
+const FEEDBACK = 'kaziboss:feedback';
+
+export interface FeedbackRequest {
+  kind?: 'idea' | 'bug' | 'other';
+  /** Où le joueur était (écran, carte…), joint à l'avis */
+  context?: Record<string, unknown>;
+}
+
+/** Ouvre le formulaire « Donner mon avis ». */
+export function openFeedback(req: FeedbackRequest = {}): void {
+  window.dispatchEvent(new CustomEvent(FEEDBACK, { detail: req }));
+}
+
+export function onOpenFeedback(fn: (req: FeedbackRequest) => void): () => void {
+  const h = (e: Event) => fn((e as CustomEvent<FeedbackRequest>).detail);
+  window.addEventListener(FEEDBACK, h);
+  return () => window.removeEventListener(FEEDBACK, h);
+}
+
 /** Petite vibration (Android) pour donner du corps aux actions. Sans effet ailleurs. */
 export function haptic(ms = 12): void {
   try {

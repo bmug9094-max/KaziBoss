@@ -192,6 +192,7 @@ export default function PlayTab() {
     return (
       <EndScreen
         run={run}
+        runsPlayed={profile.stats.runsPlayed}
         unlimitedLives={hasPack('unlimited_lives')}
         hasAgri={hasPack('agri_import')}
         coins={profile.kazicoins}

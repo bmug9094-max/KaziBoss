@@ -5,6 +5,7 @@ import { playChime, playSuccess } from '../../lib/sound';
 import { usePlayer } from '../../state/PlayerContext';
 import type { Lesson, ModuleColor, QuizKind } from '../../types';
 import { L } from '../../i18n';
+import QuickVote from '../feedback/QuickVote';
 
 const KIND_LABEL: Record<QuizKind, string> = {
   qcm: 'Question',
@@ -91,6 +92,14 @@ export default function LessonPlayer({ lesson, moduleColor, onClose }: { lesson:
                   </span>
                 </div>
                 {alreadyDone && <p className="mt-3 text-xs text-muted">{L('Révision : récompenses réduites.', 'Review: reduced rewards.')}</p>}
+                <div className="mt-6 w-full max-w-xs">
+                  <QuickVote
+                    id={`lesson:${lesson.id}`}
+                    kind="lesson"
+                    question={L('Cette leçon était claire ?', 'Was this lesson clear?')}
+                    context={{ screen: 'lesson_end', lessonId: lesson.id, correct, total: lesson.quiz.length }}
+                  />
+                </div>
               </motion.div>
             ) : inTheory ? (
               <motion.div key={`t${step}`} initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}>
