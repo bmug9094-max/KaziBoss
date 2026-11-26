@@ -10,3 +10,8 @@ dev-dist
 
 # Cache local de la CLI Supabase
 supabase/.temp/
+
+# Guides pour assistants de code (installés localement, hors application)
+.agents/
+.claude/
+skills-lock.json
