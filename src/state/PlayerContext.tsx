@@ -85,6 +85,8 @@ interface PlayerContextValue {
   notify: (message: string, tone?: ToastTone) => void;
   signUp: (email: string, password: string, username: string, city: string) => Promise<AuthResult>;
   signIn: (email: string, password: string) => Promise<AuthResult>;
+  /** Connexion / inscription avec Google (redirige vers Google puis revient sur le site) */
+  signInWithGoogle: () => Promise<AuthResult>;
   signOut: () => Promise<void>;
   resetProgress: () => void;
   /** Envoie l'email « mot de passe oublié » */
@@ -264,6 +266,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       setRefCode(row.ref_code ?? null);
     }
     setSynced(true);
+    // Parrainage d'un compte créé avec Google : le code (?ref=) n'a pas pu passer par l'inscription.
+    // Le serveur ne l'accepte que pour un compte de moins de 24 h sans parrain (schema.sql § 8).
+    const ref = pendingReferral();
+    if (ref) {
+      void supabase.rpc('claim_referral', { p_code: ref }).then(({ error: refError }) => {
+        if (!refError) clearReferral();
+      });
+    }
     // Achats payés avant la création du compte (ou avec un simple lien de paiement).
     void restorePurchases(true);
     // KaziCoins offerts par le serveur (parrainage) : appliqués APRÈS la fusion ci-dessus.
@@ -394,6 +404,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     return error ? { error: error.message === 'Invalid login credentials' ? L('Email ou mot de passe incorrect.', 'Incorrect email or password.') : error.message } : {};
   }, []);
 
+  const signInWithGoogle = useCallback(async (): Promise<AuthResult> => {
+    if (!supabase) return { error: L('Supabase non configuré.', 'Supabase is not configured.') };
+    // Retour sur la page d'origine (www, sans www ou vercel.app) : doit figurer dans les URL autorisées de Supabase Auth.
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+    return error ? { error: error.message } : {};
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase?.auth.signOut();
     setRefCode(null);
@@ -432,7 +449,17 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.functions.invoke<{ step?: string; url?: string | null; error?: string }>('create-checkout', {
       body: { pack, buyer },
     });
-    if (error || !data) return { error: L('Paiement indisponible pour le moment. Réessaie dans un instant.', 'Payment is unavailable right now. Try again in a moment.') };
+    if (error || !data) {
+      // Erreur renvoyée par la fonction (4xx/5xx) : on affiche sa vraie raison plutôt qu'un message générique.
+      let reason: string | undefined;
+      try {
+        const ctx = (error as { context?: Response } | null)?.context;
+        if (ctx) reason = ((await ctx.json()) as { error?: string })?.error;
+      } catch {
+        /* réponse illisible : message générique */
+      }
+      return { error: reason || L('Paiement indisponible pour le moment. Réessaie dans un instant.', 'Payment is unavailable right now. Try again in a moment.') };
+    }
     if (data.step === 'already_purchased') {
       await restorePurchases(true);
       return { info: L('Tu as déjà acheté ce pack : il est restauré sur ton compte.', 'You already bought this pack: it has been restored to your account.') };
@@ -509,6 +536,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       notify,
       signUp,
       signIn,
+      signInWithGoogle,
       signOut,
       resetProgress,
       requestPasswordReset,
@@ -536,6 +564,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       notify,
       signUp,
       signIn,
+      signInWithGoogle,
       signOut,
       resetProgress,
       requestPasswordReset,

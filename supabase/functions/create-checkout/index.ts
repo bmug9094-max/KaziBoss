@@ -67,7 +67,13 @@ Deno.serve(async (req) => {
   const body = await res.json().catch(() => null);
   if (!res.ok) {
     console.error('Chariow checkout', res.status, body);
-    return json({ error: 'Le service de paiement ne répond pas. Réessaie dans un instant.' }, 502, corsHeaders);
+    // Raison donnée par Chariow (ex. moyen de paiement non activé), pour que le joueur et le support la voient.
+    const detail = typeof body?.message === 'string' ? body.message.slice(0, 200) : '';
+    return json(
+      { error: detail ? `Paiement refusé par Chariow : ${detail}` : 'Le service de paiement ne répond pas. Réessaie dans un instant.' },
+      502,
+      corsHeaders,
+    );
   }
 
   const step = body?.data?.step as string | undefined;

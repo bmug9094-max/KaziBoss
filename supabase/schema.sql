@@ -393,3 +393,58 @@ $$;
 
 revoke all on function public.my_referral_stats() from public, anon;
 grant execute on function public.my_referral_stats() to authenticated;
+
+-- ───────────────────────── 8. CONNEXION GOOGLE ─────────────────────────
+-- Un compte créé avec Google n'a ni pseudo ni code de parrainage dans ses métadonnées.
+-- Pseudo : on prend le prénom Google (premier mot du nom, jamais le nom complet,
+-- car le classement est public), sinon « Boss » + 6 caractères.
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = '' as $$
+declare
+  v_username text := coalesce(
+    nullif(trim(new.raw_user_meta_data ->> 'username'), ''),
+    nullif(split_part(trim(coalesce(new.raw_user_meta_data ->> 'full_name', new.raw_user_meta_data ->> 'name', '')), ' ', 1), ''),
+    'Boss' || substr(new.id::text, 1, 6)
+  );
+  v_ref      text := lower(nullif(trim(new.raw_user_meta_data ->> 'ref'), ''));
+  v_referrer uuid;
+begin
+  if char_length(v_username) < 3 then v_username := v_username || '_kb'; end if;
+  if v_ref is not null then
+    select id into v_referrer from public.profiles where ref_code = v_ref;
+  end if;
+  insert into public.profiles (id, username, city, ref_code, referred_by)
+  values (
+    new.id,
+    left(v_username, 24),
+    left(nullif(trim(new.raw_user_meta_data ->> 'city'), ''), 40),
+    substr(replace(gen_random_uuid()::text, '-', ''), 1, 8),
+    v_referrer
+  )
+  on conflict (id) do nothing;
+  return new;
+end $$;
+
+-- Parrainage après une inscription Google : l'app envoie le code mémorisé (?ref=) juste après
+-- la première connexion. Accepté seulement pour un compte créé il y a moins de 24 h,
+-- sans parrain, pas encore récompensé, et jamais son propre code.
+create or replace function public.claim_referral(p_code text)
+returns boolean language plpgsql security definer set search_path = '' as $$
+declare
+  v_uid      uuid := auth.uid();
+  v_referrer uuid;
+begin
+  if v_uid is null then raise exception 'Non connecté'; end if;
+  select id into v_referrer from public.profiles where ref_code = lower(trim(p_code));
+  if v_referrer is null or v_referrer = v_uid then return false; end if;
+  if not exists (select 1 from auth.users where id = v_uid and created_at > now() - interval '24 hours') then
+    return false;
+  end if;
+  update public.profiles
+     set referred_by = v_referrer
+   where id = v_uid and referred_by is null and not referral_rewarded;
+  return found;
+end $$;
+
+revoke all on function public.claim_referral(text) from public, anon;
+grant execute on function public.claim_referral(text) to authenticated;
