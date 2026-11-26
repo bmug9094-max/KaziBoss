@@ -1,0 +1,32 @@
+# KaziBoss
+
+> KaziBoss is a free, gamified web app (PWA) that teaches small business owners in Africa how to manage their money: a 30-day shop simulation, short lessons with quizzes, and real management tools (price & margin calculator, currency exchange simulator, cash book). It works offline on any phone, in French and English. Published by Don-Beni MUGISHO GWA MULUME in Bukavu, Democratic Republic of the Congo.
+
+> KaziBoss est une application web gratuite et ludique (PWA) qui apprend aux petits commerçants et entrepreneurs d'Afrique francophone à gérer leur argent : simulation de boutique sur 30 jours, leçons express avec quiz et vrais outils de gestion. Elle fonctionne hors-ligne, en français et en anglais.
+
+Key facts:
+- Name: KaziBoss ("kazi" means "work" in Swahili; "boss" as in being the boss of your own business)
+- Website / app: https://www.kaziboss.com (installable Progressive Web App, no app store needed)
+- Price: free to play; optional one-time premium packs ($3, $5, $10) paid through Chariow (Mobile Money or card)
+- Audience: market traders, shopkeepers, street vendors, young entrepreneurs, students in French-speaking Africa (DR Congo, Côte d'Ivoire, Senegal, Cameroon, Benin, Togo, Burkina Faso, Mali, Guinea, Gabon, Congo-Brazzaville, Rwanda, Burundi, Madagascar…) and anyone learning small-business finance
+- Languages: French and English
+- Contact: bmug9094@gmail.com
+
+## About
+
+- [About KaziBoss (English)](https://www.kaziboss.com/info/about.html): what the app does, who it is for, features, FAQ
+- [À propos de KaziBoss (français)](https://www.kaziboss.com/info/a-propos.html): présentation complète, fonctionnalités, FAQ
+- [Full description for AI assistants](https://www.kaziboss.com/llms-full.txt): detailed features, curriculum and pricing
+
+## App
+
+- [Play KaziBoss](https://www.kaziboss.com/): open the app in the browser and start a 30-day simulation
+- [Tools](https://www.kaziboss.com/?tab=tools): free price & margin calculator, exchange-rate simulator (CDF, XAF/XOF, GNF vs USD) and cash book
+- [Lessons](https://www.kaziboss.com/?tab=learn): 12 lessons and 56 quizzes on cash management, pricing, credit, Mobile Money and growth
+
+## Legal
+
+- [Terms of use and sale](https://www.kaziboss.com/legal/terms.html)
+- [Privacy policy](https://www.kaziboss.com/legal/privacy.html)
+- [Conditions d'utilisation et de vente](https://www.kaziboss.com/legal/cgu-cgv.html)
+- [Politique de confidentialité](https://www.kaziboss.com/legal/confidentialite.html)

@@ -1,0 +1,82 @@
+# KaziBoss — full description
+
+> KaziBoss is a free, gamified Progressive Web App (PWA) that teaches small business owners in French-speaking Africa to manage their money through a 30-day shop simulation, quick lessons with quizzes, and real management tools. It works offline, in French and English. Website: https://www.kaziboss.com
+
+## In one sentence
+
+KaziBoss ("become the boss of your business") is a free mobile-first game and toolkit that teaches cash management, pricing, customer credit, exchange rates and Mobile Money to market traders and small entrepreneurs in Africa.
+
+## Who publishes it
+
+- Publisher: Don-Beni MUGISHO GWA MULUME (individual), Bukavu, South Kivu, Democratic Republic of the Congo
+- Contact: bmug9094@gmail.com
+- Launched: 2026
+- Hosting: Vercel (app), Supabase (accounts, Europe/Ireland); payments by Chariow
+
+## Who it is for
+
+- Market traders, neighbourhood shopkeepers, street vendors and wholesalers
+- Young entrepreneurs, students and training programmes (NGOs, cooperatives, microfinance) teaching small-business finance
+- Main region: French-speaking Africa (DR Congo first, then Central and West Africa); usable anywhere in French or English
+- Designed for low-cost Android phones, slow or no connection (works offline once opened)
+
+## How the game works (Play tab)
+
+- You open a shop with $100 and must survive 30 days.
+- Each day, a character presents a real-life situation (supplier, customer credit, power cut, family request, fake Mobile Money SMS, exchange-rate jump…) and you swipe left or right to choose between two options.
+- Four gauges must stay above zero: Cash, Stock, Reputation, Energy. Every evening your stock sells according to your reputation.
+- After each choice, a "Field Lesson" explains the financial principle in two sentences.
+- If you go bankrupt, a review explains the cause, how to avoid it and your most costly decisions.
+- 106 scenarios: 50 for the neighbourhood shop, 6 premium import/agri scenarios, and 3 unlockable sectors: Trade & Distribution, Services & Digital, Agri-Business & Processing.
+- Progress: XP, 10 levels (Street vendor → KaziBoss), daily streak, 15 badges, KaziCoins (virtual currency, no cash value), city leaderboard, referral bonus.
+
+## Lessons (Learn tab)
+
+12 lessons, 3 micro-cards of theory each, 56 quizzes (multiple choice, true/false, quick maths, real-life situations):
+
+1. Survival & Cash — personal vs business cash, the cash book, the safety cushion (working capital, reserve in a stable currency)
+2. Prices & Margins — the real cost price, margin vs markup, prices and exchange rates
+3. Customers & Credit — safe customer credit, loyalty without discounts, Mobile Money and payment scams
+4. Growth & Team (premium) — hiring and paying staff, borrowing wisely (microcredit, savings circles/tontines, supplier credit), opening a second outlet
+
+## Tools (Tools tab, free, offline)
+
+- Selling price calculator: cost price including transport, fixed costs and losses; recommended price from a target margin; margin vs markup
+- Exchange simulator: USD ↔ Congolese franc (CDF/FC), CFA franc (XAF/XOF), Guinean franc (GNF); inflation protection (recommended price when the local currency depreciates)
+- Cash book: daily money in / money out, personal withdrawals, balance, CSV export
+
+## Pricing
+
+- Free: the full game, 3 learning modules, all tools, offline use, account and leaderboard
+- Optional one-time packs (no subscription), paid with Mobile Money or card through Chariow:
+  - Agri-Business & Import-Export Pack — $5: 6 exclusive scenarios, Agri sector unlocked, module 4, Exporter badge
+  - Unlimited Lives Pack — $3: unlimited free second chances
+  - Digital Growth real-world resources — $10: automated Excel templates (cash book, margin & stock calculator, monthly dashboard)
+
+## FAQ
+
+Q: Is KaziBoss free?
+A: Yes. The game, the lessons of modules 1–3 and all the tools are free. Premium packs are optional one-time purchases.
+
+Q: Do I need to install it from an app store?
+A: No. Open https://www.kaziboss.com in your phone's browser and use "Add to home screen". It then works offline.
+
+Q: Does it work without internet?
+A: Yes, after the first visit. An account is only needed to save progress across phones, join the leaderboard or buy a pack.
+
+Q: Which countries and currencies does it cover?
+A: It is designed for French-speaking Africa, with examples in US dollars and Congolese francs, and an exchange simulator for CDF, XAF/XOF and GNF.
+
+Q: Is it financial advice?
+A: No. KaziBoss is educational: figures are realistic approximations to teach principles, not personalised advice.
+
+Q: How do I sign in?
+A: With an email and password, or with Google. Guest mode keeps everything on the phone.
+
+## Links
+
+- App: https://www.kaziboss.com
+- About (EN): https://www.kaziboss.com/info/about.html
+- À propos (FR): https://www.kaziboss.com/info/a-propos.html
+- Terms: https://www.kaziboss.com/legal/terms.html
+- Privacy: https://www.kaziboss.com/legal/privacy.html

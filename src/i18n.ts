@@ -19,6 +19,9 @@ function detect(): Lang {
   } catch {
     /* stockage indisponible */
   }
+  // Robots d'indexation (Googlebot rend la page avec un navigateur anglais) : version française,
+  // cohérente avec les métadonnées de index.html.
+  if (typeof navigator !== 'undefined' && /bot|crawl|spider|slurp|preview/i.test(navigator.userAgent)) return 'fr';
   const nav = typeof navigator !== 'undefined' ? (navigator.languages?.[0] ?? navigator.language ?? '') : '';
   return nav.toLowerCase().startsWith('fr') ? 'fr' : nav ? 'en' : 'fr';
 }

@@ -54,8 +54,8 @@ export default defineConfig({
         // Précache de tout le shell applicatif : l'app fonctionne entièrement hors-ligne.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,webmanifest}'],
         navigateFallback: '/index.html',
-        // Les pages légales sont de vraies pages HTML : ne pas les remplacer par l'app.
-        navigateFallbackDenylist: [/^\/legal\//],
+        // Pages légales, pages « À propos » et fichiers pour robots : vrais fichiers, pas l'app.
+        navigateFallbackDenylist: [/^\/legal\//, /^\/info\//, /^\/(robots\.txt|sitemap\.xml|llms(-full)?\.txt)$/],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         runtimeCaching: [
